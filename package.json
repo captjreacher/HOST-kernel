@@ -1,0 +1,16 @@
+{
+  "name": "host-kernel",
+  "private": true,
+  "version": "0.1.0",
+  "description": "HOST-kernel platform runtime for the MGRNZ ecosystem.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "tsx --test tests/registry-service.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.13",
+    "tsx": "^4.20.5",
+    "typescript": "^5.8.3"
+  }
+}
