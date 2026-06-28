@@ -8,9 +8,31 @@
 | Status | Governance Baseline Recorded |
 | Version | 1.0 |
 | Owner | HOST |
-| Last reviewed | 2026-06-28 |
+| Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
 | Related documents | [README](../README.md), [docs/index.md](index.md), [docs/constitution/ecosystem-constitution.md](constitution/ecosystem-constitution.md), [docs/architecture/system-architecture.md](architecture/system-architecture.md) |
+
+## HOST-3.0 - Application Layer Architecture Baseline
+
+This entry records the HOST-3.0 architecture baseline.
+
+- the Application Layer is now defined as the boundary above the execution/provider stack and below products
+- HOST-3 is responsible for orchestration, asynchronous workflows, persistence-backed APIs, external transports, and application-specific policies
+- synchronous runtime APIs remain in HOST-1 through `kernel-api`
+- persistence composition remains in HOST-2 through `context-runtime` -> `context-store` -> `context-persistence`
+- persistence-backed APIs now have a defined architectural home in HOST-3 rather than being deferred abstractly above HOST-2
+- conceptual HOST-3 package responsibilities are documented as `context-service`, `application-runtime`, and `api-host`
+- ADR-006 records the baseline without creating application packages or implementing business logic
+
+## HOST-2.8A - Context Persistence Boundary Decision
+
+This entry records the HOST-2.8A architectural decision.
+
+- HOST-2.8 stopped because the existing HOST-1 Context Runtime adapter contract is synchronous while provider-backed persistence composition is asynchronous by design
+- `kernel-api` context endpoints are now documented explicitly as runtime-only create and validate surfaces
+- persistence composition remains entirely inside the execution layer through `context-runtime` -> `context-store` -> `context-persistence` -> provider packages
+- persistence-backed context APIs are deferred to a future execution/application boundary rather than being introduced through `kernel-api`
+- ADR-005 records the boundary decision without changing HOST-1 contracts or weakening ADR-004
 
 ## HOST-1.9 - Kernel Bootstrap
 

@@ -10,7 +10,7 @@
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](../constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md) |
+| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md), [ADR-005](ADR-005-context-persistence-api-boundary.md), [ADR-006](ADR-006-application-layer-architecture-baseline.md), [Application Layer Architecture](application-layer.md) |
 
 ## Executive Overview
 
@@ -25,7 +25,7 @@ At a high level:
 - HOST governs the ecosystem and defines the control layer.
 - CONTEXT stores canonical knowledge, evidence, and relationships.
 - Roadmap sequences approved work into planning objects.
-- Product repositories implement approved changes.
+- Product repositories implement approved changes through application and delivery surfaces that sit below the HOST-controlled architecture layers.
 - External services provide runtime and integration capabilities around the ecosystem.
 
 ## Ecosystem Architecture
@@ -72,7 +72,7 @@ The diagram shows the ecosystem as a controlled architecture, not as a deploymen
 HOST is the control plane.
 CONTEXT is the canonical knowledge plane.
 Roadmap is the planning plane.
-Product repositories are the execution plane.
+Product repositories are the delivery plane beneath the HOST application boundary.
 
 ## Architectural Planes
 
@@ -126,6 +126,19 @@ Responsibilities:
 - persistence-provider coordination
 - deterministic contract enforcement
 
+### Application Layer
+
+Owned by HOST application architecture.
+
+Responsibilities:
+
+- orchestration
+- asynchronous workflows
+- persistence-backed APIs
+- external transports
+- composition of execution-layer capabilities
+- application-specific policies
+
 The canonical execution stack is frozen as:
 
 ```text
@@ -159,10 +172,16 @@ graph
 
 Application Layer
 
-HOST products
+context-service
+application-runtime
+api-host
+
+↓
+
+Products
 ```
 
-Product repositories remain the implementation and delivery plane for product code, but they do not own the execution-layer package boundaries defined above.
+Product repositories remain the implementation and delivery plane for product code, but they do not own the Knowledge Plane, Execution Layer, provider layer, or Application Layer package boundaries defined above.
 
 ## Repository Interaction Model
 
@@ -192,7 +211,8 @@ Ownership boundaries remain unchanged:
 - HOST owns governance and orchestration.
 - CONTEXT owns canonical meaning and evidence.
 - Roadmap owns sequencing and commitments.
-- Product repositories own implementation and delivery artifacts.
+- HOST application architecture owns shared orchestration, persistence-backed APIs, and transport boundaries above the execution stack.
+- Product repositories own implementation and delivery artifacts beneath that shared application boundary.
 
 ## Request Lifecycle
 
@@ -298,6 +318,11 @@ Future adapters must land in a provider layer below applications and above the e
 
 HOST-2.5 introduces the first concrete provider-layer implementation as a filesystem adapter package, `@host/context-provider-filesystem`, without changing the frozen execution-plane package boundaries.
 
+HOST-2.8A further clarifies that persistence-backed API endpoints do not belong in HOST-1.
+The existing `kernel-api` context endpoints remain runtime-only, while persistence-backed transports are deferred to a future execution/application boundary according to [ADR-005](ADR-005-context-persistence-api-boundary.md).
+
+HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, external transports, and application-specific policies begin without altering HOST-1 or HOST-2 contracts. See [Application Layer Architecture](application-layer.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).
+
 ## Traceability Architecture
 
 ```mermaid
@@ -333,7 +358,7 @@ Recommended sequence:
 
 1. HOST-1 Registry Service
 2. HOST-2 Objective Engine
-3. HOST-3 Context Engine
+3. HOST-3 Application Layer
 4. HOST-4 Roadmap Engine
 5. HOST-5 Orchestration Engine
 6. HOST-6 Operator Console
@@ -342,7 +367,7 @@ Dependencies:
 
 - HOST-1 depends on the canonical taxonomy, kernel operating model, and registry specification.
 - HOST-2 depends on registry records and objective allocation rules.
-- HOST-3 depends on the context domain model and state machine.
+- HOST-3 depends on the frozen execution/provider stack and the HOST-1/HOST-2 boundary decisions.
 - HOST-4 depends on planning objects and governance input.
 - HOST-5 depends on the control, knowledge, and planning planes being stable.
 - HOST-6 depends on the previous services being available as a coherent operator surface.
@@ -352,9 +377,11 @@ These are architectural sequencing labels only. They do not define delivery scop
 Current status:
 
 - HOST-1 complete
+- HOST-2 complete
 - Control Plane complete
-- Kernel MVP complete
-- HOST-2 recommended as the next commencement point
+- Execution Layer baseline frozen
+- HOST-3 architecture baseline established
+- HOST-3 application implementation deferred beyond this sprint
 
 ## Reading Order
 
@@ -389,3 +416,5 @@ Governance Baseline v1.0 - Frozen
 Architecture Baseline v1.0 - Approved
 
 Execution Layer Baseline v1.0 - Frozen
+
+Application Layer Baseline v1.0 - Approved

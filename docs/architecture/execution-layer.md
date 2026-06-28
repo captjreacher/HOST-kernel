@@ -43,8 +43,44 @@ graph
 
 Application Layer
 
-HOST products
+HOST-3 application packages
+
+↓
+
+Products
 ```
+
+## Boundary Decision
+
+HOST-2.8 established that the existing HOST-1 context adapter boundary cannot directly expose provider-backed persistence.
+
+Reason:
+
+- HOST-1 runtime context contracts are synchronous and limited to runtime creation and validation
+- execution-layer persistence contracts are asynchronous because providers, sessions, transactions, and store access are asynchronous
+
+As a result:
+
+- persistence composition remains inside the execution layer
+- `kernel-api` remains runtime-only
+- persistence-backed APIs are deferred to a future application boundary above the execution layer
+
+See [ADR-005 - Context Persistence API Boundary](ADR-005-context-persistence-api-boundary.md).
+
+## Application Handoff
+
+The execution layer stops at deterministic persistence composition.
+
+HOST-3 begins above this boundary and owns:
+
+- persistence-backed API hosting
+- orchestration across execution capabilities
+- asynchronous workflow coordination
+- application-specific policies
+
+Those concerns must be introduced without changing HOST-1 runtime contracts or HOST-2 execution contracts.
+
+See [Application Layer Architecture](application-layer.md) and [ADR-006 - Application Layer Architecture Baseline](ADR-006-application-layer-architecture-baseline.md).
 
 ## Package Responsibilities
 
@@ -237,6 +273,9 @@ They implement local persistence while keeping provider wiring behind the persis
 
 `@host/context-provider-sqlite` -> `@host/context-persistence` -> `@host/context-store` -> `@host/context-runtime` -> HOST-1 kernel packages
 
+Provider packages remain leaf implementations.
+They do not extend HOST-1 APIs directly and do not introduce provider awareness into `kernel-api`.
+
 ## Dependency Rules
 
 - no circular dependencies
@@ -244,6 +283,8 @@ They implement local persistence while keeping provider wiring behind the persis
 - no execution package bypasses around the canonical stack
 - no provider package dependency on applications
 - no application code inside execution packages
+- no persistence API surface inside HOST-1 packages
+- no async persistence concerns added to the HOST-1 context runtime adapter
 
 The verifier script is the executable enforcement point for the repository package graph.
 

@@ -14,9 +14,11 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.10 with the HOST-2 execution layer frozen as the v1 architecture baseline.
+Current release: Kernel 1.10 with the HOST-2 execution layer frozen and the HOST-3 application layer approved as architecture baselines.
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
+
+Application Layer status: architecture baseline approved; no HOST-3 application packages are implemented in this sprint.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -73,7 +75,9 @@ npm run verify:graph
 - [docs/architecture/kernel-api.md](docs/architecture/kernel-api.md)
 - [docs/architecture/context-runtime.md](docs/architecture/context-runtime.md)
 - [docs/architecture/execution-layer.md](docs/architecture/execution-layer.md)
+- [docs/architecture/application-layer.md](docs/architecture/application-layer.md)
 - [docs/architecture/ADR-004-execution-layer-architecture-baseline.md](docs/architecture/ADR-004-execution-layer-architecture-baseline.md)
+- [docs/architecture/ADR-006-application-layer-architecture-baseline.md](docs/architecture/ADR-006-application-layer-architecture-baseline.md)
 - [docs/changelog/README.md](docs/changelog/README.md)
 
 ## Scope Notes
@@ -83,3 +87,4 @@ npm run verify:graph
 - The kernel foundation now includes a composed bootstrap runtime in `kernel-core`.
 - The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.
 - The execution layer is frozen as `context-runtime` -> `context-store` -> `context-persistence`, with future adapters required to sit above that boundary.
+- The Application Layer is architecture-defined above the execution/provider stack and below products, with persistence-backed APIs starting there rather than in HOST-1.

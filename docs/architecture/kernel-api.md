@@ -33,6 +33,9 @@ The Kernel API exposes:
 - `GET /kernel/repositories`
 - `GET /kernel/repositories/:id`
 - `POST /kernel/validation`
+- `GET /kernel/context`
+- `POST /kernel/context/:subject`
+- `POST /kernel/context/validate/:subject`
 
 ## Design Constraints
 
@@ -41,7 +44,9 @@ The Kernel API exposes:
 - The API does not bypass the Kernel.
 - The API does not duplicate validation logic.
 - The API exposes document and repository metadata only.
+- The API context endpoints are runtime-only and use the synchronous HOST-1 Context Runtime adapter.
 - The API does not add persistence, authentication, product concerns, or execution-plane behavior.
+- The API does not expose provider lifecycle, sessions, transactions, or persistence composition.
 
 ## Error Handling
 
@@ -71,4 +76,25 @@ The Kernel API preserves these invariants:
 - Objective mutation flows through the shared registry-backed objective service
 - Validation uses the shared Validation Engine
 - Registry, taxonomy, document, and repository discovery remain governed Control Plane capabilities
+- Context endpoints remain limited to runtime creation and validation
+- No provider-specific logic exists in the Kernel API surface
 - No product-specific code exists in the Kernel API surface
+
+## Context Boundary
+
+The context endpoints in `kernel-api` exist to expose HOST-1 Context Runtime behavior only.
+
+They may:
+
+- create immutable runtime context payloads
+- validate runtime context payloads
+- report whether a runtime adapter is installed
+
+They may not:
+
+- persist context payloads
+- manage sessions or transactions
+- select or reveal persistence providers
+- act as the transport boundary for execution-layer persistence
+
+Persistence-backed context APIs are deferred to the HOST-3 Application Layer as defined by [ADR-005](ADR-005-context-persistence-api-boundary.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).

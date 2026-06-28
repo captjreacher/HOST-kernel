@@ -25,7 +25,12 @@ graph TD
   ProviderLayer["Future Provider Layer"]
   CtxFsProvider["@host/context-provider-filesystem"]
   CtxSqliteProvider["@host/context-provider-sqlite"]
-  AppLayer["Application Layer\nHOST products"]
+  subgraph Application["Application Layer / HOST-3"]
+  ContextService["context-service\n(conceptual)"]
+  AppRuntime["application-runtime\n(conceptual)"]
+  ApiHost["api-host\n(conceptual)"]
+  end
+  Products["Products"]
 
   KEvents --> KTypes
   KIdentifiers --> KTypes
@@ -70,7 +75,10 @@ graph TD
   CtxSqliteProvider --> CtxPersistence
   ProviderLayer --> CtxFsProvider
   ProviderLayer --> CtxSqliteProvider
-  AppLayer --> ProviderLayer
+  ContextService --> CtxPersistence
+  AppRuntime --> ContextService
+  ApiHost --> AppRuntime
+  Products --> ApiHost
 ```
 
 ## Canonical Layering
@@ -106,7 +114,13 @@ graph
 
 Application Layer
 
-HOST products
+context-service
+application-runtime
+api-host
+
+↓
+
+Products
 ```
 
 ## Frozen Rules
@@ -118,6 +132,16 @@ HOST products
 - `context-persistence` remains the top of the execution plane and the canonical entry point for future provider packages.
 - `@host/context-provider-filesystem` and `@host/context-provider-sqlite` are concrete provider-layer implementations and depend downward only.
 - Future provider packages must depend on `@host/context-persistence` and must not depend on applications.
-- Application packages must remain above the provider layer.
+- Application packages must remain above the provider layer and below products.
+- Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
+- Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) enforces the current workspace form of these rules.
+## HOST-3 Conceptual Responsibilities
+
+The Application Layer baseline defines these first architectural package concepts without creating them yet:
+
+- `context-service` for persistence-backed orchestration and application policies
+- `application-runtime` for composition roots and asynchronous workflow coordination
+- `api-host` for external transports and persistence-backed APIs
+
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) enforces the current workspace form of the frozen HOST-1 and HOST-2 rules and reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.
