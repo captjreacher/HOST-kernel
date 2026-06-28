@@ -12,6 +12,7 @@ graph TD
   KRepositories["@host/kernel-repositories"]
   KRegistry["@host/kernel-registry"]
   KCore["@host/kernel-core"]
+  KApi["@host/kernel-api"]
 
   KEvents --> KTypes
   KIdentifiers --> KTypes
@@ -38,6 +39,11 @@ graph TD
   KCore --> KDocuments
   KCore --> KRepositories
   KCore --> KRegistry
+  KApi --> KTypes
+  KApi --> KValidation
+  KApi --> KObjectives
+  KApi --> KRegistry
+  KApi --> KCore
 ```
 
-The graph is intentionally acyclic. Shared types sit at the bottom, and the core package composes upward without feeding back into lower layers. The runtime composition package no longer depends on test utilities.
+The graph is intentionally acyclic. Shared types sit at the bottom, `kernel-core` composes the runtime, and `kernel-api` sits above that runtime as a facade without feeding logic back into lower layers. The runtime composition package no longer depends on test utilities.

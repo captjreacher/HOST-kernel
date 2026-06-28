@@ -11,6 +11,7 @@
     { "path": "./packages/kernel-repositories" },
     { "path": "./packages/kernel-registry" },
     { "path": "./packages/kernel-test-utils" },
-    { "path": "./packages/kernel-core" }
+    { "path": "./packages/kernel-core" },
+    { "path": "./packages/kernel-api" }
   ]
 }

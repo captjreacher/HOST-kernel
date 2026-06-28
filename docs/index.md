@@ -53,6 +53,7 @@ This index is the onboarding map for the HOST governance framework.
 | [kernel context refresh](kernel/context-refresh.md) | Context update rules |
 | [kernel operating principles](kernel/operating-principles.md) | Constitutional operating principles |
 | [kernel AI operating rules](kernel/ai-operating-rules.md) | Rules for human and AI sessions |
+| [kernel API architecture](architecture/kernel-api.md) | Runtime facade and endpoint constraints |
 
 ## Recommended Reading Order
 

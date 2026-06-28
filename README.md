@@ -14,7 +14,7 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.9 Kernel Bootstrap.
+Current release: Kernel 1.10 Kernel API.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -42,6 +42,7 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/kernel-repositories` for repository registry contracts
 - `packages/kernel-events` for canonical runtime events
 - `packages/kernel-core` for the composed kernel surface
+- `packages/kernel-api` for the Control Plane runtime API facade
 
 The canonical identifier model is documented in [docs/architecture/identifier-service.md](docs/architecture/identifier-service.md).
 
@@ -60,8 +61,10 @@ npm run verify:graph
 - [docs/objectives/HOST-1.4-validation-engine.md](docs/objectives/HOST-1.4-validation-engine.md)
 - [docs/objectives/HOST-1.5-registry-service.md](docs/objectives/HOST-1.5-registry-service.md)
 - [docs/objectives/HOST-1.9-kernel-bootstrap.md](docs/objectives/HOST-1.9-kernel-bootstrap.md)
+- [docs/objectives/HOST-1.10-kernel-api.md](docs/objectives/HOST-1.10-kernel-api.md)
 - [docs/templates/implementation-task-template.md](docs/templates/implementation-task-template.md)
 - [docs/architecture/package-dependency-graph.md](docs/architecture/package-dependency-graph.md)
+- [docs/architecture/kernel-api.md](docs/architecture/kernel-api.md)
 - [docs/changelog/README.md](docs/changelog/README.md)
 
 ## Scope Notes
@@ -69,3 +72,4 @@ npm run verify:graph
 - The existing registry service remains available through the new `kernel-registry` package.
 - Root `src/` files now act as compatibility shims over the workspace packages.
 - The kernel foundation now includes a composed bootstrap runtime in `kernel-core`.
+- The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.

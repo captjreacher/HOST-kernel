@@ -297,5 +297,7 @@ export interface TaxonomyResolver {
   listObjectTypes(): TaxonomyEntry[];
   listIdentifierPrefixes(): TaxonomyEntry[];
   listLifecycleStates(): TaxonomyEntry[];
+  listEventTypes(): TaxonomyEntry[];
+  listRelationshipTypes(): TaxonomyEntry[];
   validateTaxonomyValue(value: string): TaxonomyValidationResult;
 }

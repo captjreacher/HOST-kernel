@@ -83,6 +83,8 @@ const validateConfig = (config: KernelRuntimeConfig): void => {
       'listObjectTypes',
       'listIdentifierPrefixes',
       'listLifecycleStates',
+      'listEventTypes',
+      'listRelationshipTypes',
       'validateTaxonomyValue',
     ]);
   }

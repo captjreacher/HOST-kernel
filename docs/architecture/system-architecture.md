@@ -299,6 +299,13 @@ Dependencies:
 
 These are architectural sequencing labels only. They do not define delivery scope.
 
+Current status:
+
+- HOST-1 complete
+- Control Plane complete
+- Kernel MVP complete
+- HOST-2 recommended as the next commencement point
+
 ## Reading Order
 
 Read the ecosystem in this order:

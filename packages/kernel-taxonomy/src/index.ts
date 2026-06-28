@@ -330,6 +330,14 @@ export class KernelTaxonomyResolver implements TaxonomyResolver {
     return [...lifecycleStates];
   }
 
+  listEventTypes(): TaxonomyEntry[] {
+    return [...eventTypes];
+  }
+
+  listRelationshipTypes(): TaxonomyEntry[] {
+    return [...relationshipTypes];
+  }
+
   validateTaxonomyValue(value: string): TaxonomyValidationResult {
     const trimmed = value.trim();
     if (!trimmed) {
@@ -386,6 +394,8 @@ export const resolveRelationshipType = (value: string): TaxonomyResolutionResult
 export const listObjectTypes = (): TaxonomyEntry[] => taxonomyResolver.listObjectTypes();
 export const listIdentifierPrefixes = (): TaxonomyEntry[] => taxonomyResolver.listIdentifierPrefixes();
 export const listLifecycleStates = (): TaxonomyEntry[] => taxonomyResolver.listLifecycleStates();
+export const listEventTypes = (): TaxonomyEntry[] => taxonomyResolver.listEventTypes();
+export const listRelationshipTypes = (): TaxonomyEntry[] => taxonomyResolver.listRelationshipTypes();
 export const validateTaxonomyValue = (value: string): TaxonomyValidationResult => taxonomyResolver.validateTaxonomyValue(value);
 
 export type {
