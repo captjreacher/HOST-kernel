@@ -2,9 +2,35 @@
 
 Current release: Kernel 0.1 Registry Foundation.
 
+Canonical specification: [docs/services/registry-service-specification.md](services/registry-service-specification.md).
+
+## Governance Metadata
+
+| Field | Value |
+| --- | --- |
+| Originating Objective | OBJ-003 |
+| Status | Overview |
+| Version | 1.0 |
+| Owner | HOST |
+| Last reviewed | 2026-06-28 |
+| Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
+| Related documents | [OBJ-001](taxonomy/taxonomy-registry.md), [OBJ-002](kernel/operating-model.md), [OBJ-003](services/registry-service-specification.md), [OBJ-004](context/context-domain-model.md), [OBJ-005](lifecycle/ecosystem-state-machine.md), [ADR-001](architecture/ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](architecture/ADR-002-host-kernel-operating-model.md) |
+
+The service layer is downstream from the canonical ecosystem taxonomy in [docs/taxonomy/taxonomy-registry.md](taxonomy/taxonomy-registry.md).
+
+Canonical governance references:
+
+- [OBJ-000](constitution/ecosystem-constitution.md)
+- [OBJ-001](taxonomy/taxonomy-registry.md)
+- [OBJ-002](kernel/operating-model.md)
+- [ADR-001](architecture/ADR-001-ecosystem-taxonomy-and-numbering.md)
+- [ADR-002](architecture/ADR-002-host-kernel-operating-model.md)
+
 ## Purpose
 
-The registry service is the Kernel 0.1 foundation for storing and validating platform registry records.
+This page is a compact overview of the service layer.
+
+See the canonical specification for the full interface and behaviour contract.
 
 ## Responsibilities
 
@@ -111,7 +137,9 @@ It provides a small, repeatable set of platform records for:
 
 It is not production seed data and does not imply production readiness.
 
-See [docs/changelog.md](C:/DEV_LOCAL/HOST-kernel/docs/changelog.md) for the Kernel 0.1 Registry Foundation baseline note.
+See [docs/changelog.md](changelog.md) for the Kernel 0.1 Registry Foundation baseline note.
+
+See the canonical governance registry in [docs/taxonomy/taxonomy-registry.md](taxonomy/taxonomy-registry.md) for the ecosystem naming and ownership model that the service layer must respect.
 
 ## Extension Path
 
