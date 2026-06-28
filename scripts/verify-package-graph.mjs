@@ -31,7 +31,7 @@ const executionPackages = {
 const providerPackagePrefixes = ['@host/context-provider-'];
 const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
 const applicationPackages = new Set(['@host/context-service', '@host/api-host']);
-const transportPackages = new Set(['@host/transport-adapter']);
+const transportPackages = new Set(['@host/transport-adapter', '@host/transport-rest']);
 
 const layerRank = {
   knowledge: 0,
@@ -57,6 +57,7 @@ const allowedApplicationDependencies = new Map([
 ]);
 const allowedTransportDependencies = new Map([
   ['@host/transport-adapter', new Set(['@host/api-host'])],
+  ['@host/transport-rest', new Set(['@host/api-host', '@host/transport-adapter'])],
 ]);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));

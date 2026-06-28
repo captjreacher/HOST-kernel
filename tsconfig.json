@@ -19,6 +19,7 @@
     { "path": "./packages/context-service" },
     { "path": "./packages/api-host" },
     { "path": "./packages/transport-adapter" },
+    { "path": "./packages/transport-rest" },
     { "path": "./packages/context-persistence-filesystem" },
     { "path": "./packages/context-persistence-sqlite" }
   ]

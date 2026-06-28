@@ -24,7 +24,7 @@ test('HOST-3.3 keeps api-host in the application layer with no transport or reve
   assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-service']);
 
   for (const packageDir of workspacePackages) {
-    if (packageDir === 'api-host' || packageDir === 'transport-adapter') {
+    if (packageDir === 'api-host' || packageDir === 'transport-adapter' || packageDir === 'transport-rest') {
       continue;
     }
 
@@ -38,7 +38,7 @@ test('HOST-3.3 keeps api-host in the application layer with no transport or reve
     assert.equal(
       dependencies.includes('@host/api-host'),
       false,
-      `${otherPackageJson.name} must not depend on @host/api-host unless it is the canonical transport-adapter package.`,
+      `${otherPackageJson.name} must not depend on @host/api-host unless it is an approved transport package.`,
     );
   }
 });
@@ -54,6 +54,19 @@ test('HOST-3.5 places transport-adapter in the transport layer with api-host as 
 
   assert.equal(packageJson.name, '@host/transport-adapter');
   assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host']);
+});
+
+test('HOST-3.6 places transport-rest in the transport layer with transport-adapter and api-host dependencies only', () => {
+  const root = process.cwd();
+  const packagesDir = path.join(root, 'packages');
+  const packageJsonPath = path.join(packagesDir, 'transport-rest', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+    dependencies?: Record<string, string>;
+    name: string;
+  };
+
+  assert.equal(packageJson.name, '@host/transport-rest');
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host', '@host/transport-adapter']);
 });
 
 test('HOST-3.3 keeps the api-host package free of transport-specific language', () => {

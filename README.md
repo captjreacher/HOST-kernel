@@ -20,7 +20,7 @@ Execution Plane runtime status: `context-runtime`, `context-store`, and `context
 
 Application Layer status: `@host/context-service` and `@host/api-host` are implemented as the canonical service and transport-neutral host boundaries for persisted context operations.
 
-Transport Layer status: `@host/transport-adapter` now defines the frozen Transport Adapter Contract v`1.0.0` above `@host/api-host`. No transport runtime or protocol implementation is present in this repository.
+Transport Layer status: `@host/transport-adapter` defines the frozen Transport Adapter Contract v`1.0.0`, and `@host/transport-rest` provides the first concrete REST translation package above `@host/api-host`. No web server or listener is present in this repository.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -55,6 +55,7 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/context-service` for the application-layer persisted context service boundary
 - `packages/api-host` for the transport-neutral API host boundary over application services
 - `packages/transport-adapter` for the canonical Transport Layer contract package
+- `packages/transport-rest` for the framework-neutral REST translation adapter
 - `packages/context-persistence-filesystem` for the first concrete filesystem provider-layer adapter
 
 The canonical identifier model is documented in [docs/architecture/identifier-service.md](docs/architecture/identifier-service.md).
@@ -95,4 +96,4 @@ npm run verify:graph
 - The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.
 - The execution layer is frozen as `context-runtime` -> `context-store` -> `context-persistence`, with future adapters required to sit above that boundary.
 - The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` and `@host/api-host` providing the first implemented service and host boundaries for persistence-backed context operations.
-- The Transport Layer now has a single canonical contract package, `@host/transport-adapter`, which depends only on `@host/api-host` and defines the interfaces every future adapter must implement.
+- The Transport Layer now includes `@host/transport-adapter` as the canonical contract package and `@host/transport-rest` as the first reusable REST translation package. Neither package opens sockets or runs a server.

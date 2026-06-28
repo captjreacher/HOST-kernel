@@ -78,6 +78,16 @@ This entry records the first concrete package for the Transport Layer.
 - deterministic helper functions now provide canonical default authentication and tracing metadata without introducing any runtime adapter behavior
 - dependency rules now enforce `@host/transport-adapter` -> `@host/api-host` only
 
+## HOST-3.6 - REST Transport Adapter Baseline
+
+This entry records the first concrete transport implementation package.
+
+- `@host/transport-rest` is now implemented as the first reusable translation package above `@host/transport-adapter` and `@host/api-host`
+- REST-style request translation now maps CRUD and query routes into the frozen API Host operation catalogue
+- REST-style response translation now maps stable API errors into deterministic HTTP status semantics without exposing stack traces
+- correlation, request, and tracing metadata now propagate through the REST translation layer
+- the package remains stateless and framework-neutral, with no listener, socket, or server runtime
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

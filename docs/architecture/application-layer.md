@@ -180,6 +180,7 @@ interface TransportAdapter<TExternalRequest, TExternalResponse> {
 The transport contract depends only on the frozen `@host/api-host` protocol.
 It does not depend on execution packages, provider packages, or HOST-1 internals.
 HOST-3.5 implements this contract boundary concretely as `@host/transport-adapter`.
+HOST-3.6 adds `@host/transport-rest` as the first concrete transport translator over that contract.
 
 Initial transport catalogue:
 

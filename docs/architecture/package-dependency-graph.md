@@ -34,6 +34,7 @@ graph TD
 
   subgraph Transport["Transport Layer / HOST-3.4"]
   Adapter["@host/transport-adapter"]
+  Rest["@host/transport-rest"]
   end
 
   Products["Products"]
@@ -85,7 +86,10 @@ graph TD
   ApiHost --> ContextService
   AppRuntime --> ApiHost
   Adapter --> ApiHost
+  Rest --> Adapter
+  Rest --> ApiHost
   Products --> Adapter
+  Products --> Rest
 ```
 
 ## Canonical Layering
@@ -129,7 +133,8 @@ application-runtime
 
 Transport Layer
 
-transport-adapter
+@host/transport-adapter
+@host/transport-rest
 
 ↓
 
@@ -154,6 +159,7 @@ Products
 - `@host/api-host` owns the frozen HOST-3.3 operation registry, request envelope, response envelope, error taxonomy, and transaction contract.
 - future transport adapter packages may depend only on `@host/api-host`
 - `@host/transport-adapter` is the sole canonical Transport Layer contract package
+- `@host/transport-rest` is the first concrete transport translation package and may depend only on `@host/transport-adapter` and `@host/api-host`
 - transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals
 - application, execution, and provider packages must not depend upward on transport adapters
 
@@ -165,8 +171,9 @@ The Application Layer baseline currently contains two implemented packages and o
 - `@host/api-host` for canonical API contract handling, operation dispatch, and stable API error translation
 - `application-runtime` for broader composition roots and asynchronous workflow coordination
 
-The Transport Layer baseline currently contains one implemented contract package responsibility:
+The Transport Layer baseline currently contains one implemented contract package and one implemented translation package responsibility:
 
 - `@host/transport-adapter` for canonical adapter contracts, authentication context contracts, correlation and tracing metadata, and deterministic metadata defaults
+- `@host/transport-rest` for stateless REST request and response translation, route registry mapping, query parameter mapping, and deterministic HTTP status translation
 
 The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` and `@host/api-host` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.

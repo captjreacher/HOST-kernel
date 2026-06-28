@@ -73,7 +73,7 @@ HOST is the control plane.
 CONTEXT is the canonical knowledge plane.
 Roadmap is the planning plane.
 Product repositories are the delivery plane beneath the HOST application boundary.
-The Transport Layer now has a single canonical contract package, `@host/transport-adapter`, above the frozen API Host protocol.
+The Transport Layer now has `@host/transport-adapter` as its canonical contract package and `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol.
 
 ## Architectural Planes
 
@@ -341,6 +341,8 @@ HOST-3.4 establishes the Transport Layer as a separate architecture boundary abo
 
 HOST-3.5 implements `@host/transport-adapter` as the sole canonical Transport Layer contract package, freezing Transport Adapter Contract v`1.0.0` without introducing any runtime adapter.
 
+HOST-3.6 implements `@host/transport-rest` as the first reusable REST translation package, keeping the Transport Layer stateless and server-free while mapping REST semantics into the frozen API Host protocol.
+
 ## Traceability Architecture
 
 ```mermaid
@@ -404,6 +406,7 @@ Current status:
 - `@host/api-host` contract frozen at HOST-3.3 / protocol `1.0.0`
 - Transport Layer baseline established at HOST-3.4
 - `@host/transport-adapter` implemented as the canonical Transport Layer contract package
+- `@host/transport-rest` implemented as the first REST translation package
 
 ## Reading Order
 
