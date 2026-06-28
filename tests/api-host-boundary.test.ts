@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-test('HOST-3.2 keeps api-host in the application layer with no transport or reverse coupling', () => {
+test('HOST-3.3 keeps api-host in the application layer with no transport or reverse coupling', () => {
   const root = process.cwd();
   const packagesDir = path.join(root, 'packages');
   const workspacePackages = fs
@@ -40,5 +40,24 @@ test('HOST-3.2 keeps api-host in the application layer with no transport or reve
       false,
       `${otherPackageJson.name} must not depend on @host/api-host.`,
     );
+  }
+});
+
+test('HOST-3.3 keeps the api-host package free of transport-specific language', () => {
+  const root = process.cwd();
+  const files = [
+    path.join(root, 'packages', 'api-host', 'src', 'contracts.ts'),
+    path.join(root, 'packages', 'api-host', 'src', 'host.ts'),
+    path.join(root, 'packages', 'api-host', 'README.md'),
+  ];
+
+  const bannedTerms = ['http', 'rest', 'hono', 'express', 'fastify', 'graphql', 'websocket', 'broker'];
+
+  for (const file of files) {
+    const contents = fs.readFileSync(file, 'utf8').toLowerCase();
+
+    for (const term of bannedTerms) {
+      assert.equal(contents.includes(term), false, `${path.basename(file)} must not reference ${term}.`);
+    }
   }
 });

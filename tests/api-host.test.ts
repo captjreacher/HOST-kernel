@@ -9,7 +9,13 @@ import type {
   ContextStoreRecord,
   ContextStoreRollbackResult,
 } from '@host/context-service';
-import { createApiHost, type ApiHost, type ApiRequest } from '../packages/api-host/src/index.ts';
+import {
+  API_HOST_OPERATION_REGISTRY,
+  API_HOST_PROTOCOL_VERSION,
+  createApiHost,
+  type ApiHost,
+  type ApiRequest,
+} from '../packages/api-host/src/index.ts';
 
 const freeze = <TValue>(value: TValue): TValue => {
   if (!value || typeof value !== 'object') {
@@ -167,129 +173,244 @@ const createMockHost = (overrides: Partial<ContextService> = {}, transactionOver
   };
 };
 
-const handle = (host: ApiHost, request: ApiRequest | unknown) => host.handle(request as ApiRequest);
+const request = (overrides: Partial<ApiRequest>): ApiRequest => ({
+  version: API_HOST_PROTOCOL_VERSION,
+  resource: 'context',
+  operation: 'context.query',
+  ...overrides,
+});
 
-test('api-host routes CRUD requests to the injected Context Service', async () => {
+const handle = (host: ApiHost, input: ApiRequest | unknown) => host.handle(input as ApiRequest);
+
+test('api-host exposes the frozen HOST-3.3 operation registry', () => {
+  assert.deepEqual(API_HOST_OPERATION_REGISTRY, [
+    'context.create',
+    'context.retrieve',
+    'context.update',
+    'context.delete',
+    'context.query',
+    'context.transaction.begin',
+    'context.transaction.create',
+    'context.transaction.retrieve',
+    'context.transaction.update',
+    'context.transaction.delete',
+    'context.transaction.query',
+    'context.transaction.commit',
+    'context.transaction.rollback',
+  ]);
+});
+
+test('api-host routes CRUD requests through the canonical operation contract', async () => {
   const { host, calls } = createMockHost();
 
-  const createResponse = await handle(host, {
-    route: 'context.create',
-    input: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
-  });
-  assert.equal(createResponse.status, 201);
+  const createResponse = await handle(
+    host,
+    request({
+      operation: 'context.create',
+      payload: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
+      request_id: 'REQ-001',
+      correlation_id: 'COR-001',
+      timestamp: '2026-06-29T08:00:00.000Z',
+    }),
+  );
+  assert.equal(createResponse.success, true);
+  if (createResponse.success) {
+    assert.equal(createResponse.version, API_HOST_PROTOCOL_VERSION);
+    assert.equal(createResponse.metadata.operation, 'context.create');
+    assert.equal(createResponse.metadata.resource, 'context');
+    assert.equal(createResponse.metadata.request_id, 'REQ-001');
+    assert.equal(createResponse.metadata.correlation_id, 'COR-001');
+    assert.equal(createResponse.metadata.timestamp, '2026-06-29T08:00:00.000Z');
+  }
 
-  const retrieveResponse = await handle(host, {
-    route: 'context.retrieve',
-    input: { key: 'context/api/1' },
-  });
-  assert.equal(retrieveResponse.status, 200);
+  const retrieveResponse = await handle(
+    host,
+    request({
+      operation: 'context.retrieve',
+      payload: { key: 'context/api/1' },
+    }),
+  );
+  assert.equal(retrieveResponse.success, true);
 
-  const updateResponse = await handle(host, {
-    route: 'context.update',
-    input: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
-  });
-  assert.equal(updateResponse.status, 200);
+  const updateResponse = await handle(
+    host,
+    request({
+      operation: 'context.update',
+      payload: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
+    }),
+  );
+  assert.equal(updateResponse.success, true);
 
-  const deleteResponse = await handle(host, {
-    route: 'context.delete',
-    input: { key: 'context/api/1' },
-  });
-  assert.equal(deleteResponse.status, 200);
+  const deleteResponse = await handle(
+    host,
+    request({
+      operation: 'context.delete',
+      payload: { key: 'context/api/1' },
+    }),
+  );
+  assert.equal(deleteResponse.success, true);
 
   assert.deepEqual(calls, ['create:context/api/1', 'retrieve:context/api/1', 'update:context/api/1', 'delete:context/api/1']);
 });
 
-test('api-host routes query and transaction requests through stable host-managed dispatch', async () => {
+test('api-host routes query and transaction requests through host-managed transaction ownership', async () => {
   const { host, calls } = createMockHost();
 
-  const queryResponse = await handle(host, {
-    route: 'context.query',
-    input: { query: { key_prefix: 'context/api' } },
-  });
-  assert.equal(queryResponse.status, 200);
+  const queryResponse = await handle(
+    host,
+    request({
+      operation: 'context.query',
+      query: { key_prefix: 'context/api' },
+    }),
+  );
+  assert.equal(queryResponse.success, true);
 
-  const beginResponse = await handle(host, {
-    route: 'context.begin-transaction',
-  });
-  assert.equal(beginResponse.status, 201);
-  assert.deepEqual(beginResponse.body.data, {
+  const beginResponse = await handle(
+    host,
+    request({
+      operation: 'context.transaction.begin',
+      request_id: 'REQ-BEGIN',
+    }),
+  );
+  assert.equal(beginResponse.success, true);
+  if (!beginResponse.success) {
+    return;
+  }
+  assert.deepEqual(beginResponse.result, {
     transaction_id: 'tx-1',
     state: 'active',
   });
-
-  const createInTx = await handle(host, {
-    route: 'context.transaction.create',
-    input: { transaction_id: 'tx-1', key: 'context/api/tx', value: { runtime_kind: 'context-record' } },
+  assert.deepEqual(beginResponse.metadata.transaction, {
+    id: 'tx-1',
+    ownership: 'host-local',
+    expiry: 'until-finalized-or-host-disposal',
+    lifecycle: 'active',
   });
-  assert.equal(createInTx.status, 201);
 
-  const queryInTx = await handle(host, {
-    route: 'context.transaction.query',
-    input: { transaction_id: 'tx-1', query: { key_prefix: 'context/api' } },
-  });
-  assert.equal(queryInTx.status, 200);
+  const createInTx = await handle(
+    host,
+    request({
+      operation: 'context.transaction.create',
+      transaction: { id: 'tx-1' },
+      payload: { key: 'context/api/tx', value: { runtime_kind: 'context-record' } },
+    }),
+  );
+  assert.equal(createInTx.success, true);
 
-  const commitResponse = await handle(host, {
-    route: 'context.transaction.commit',
-    input: { transaction_id: 'tx-1' },
-  });
-  assert.equal(commitResponse.status, 200);
+  const queryInTx = await handle(
+    host,
+    request({
+      operation: 'context.transaction.query',
+      transaction: { id: 'tx-1' },
+      query: { key_prefix: 'context/api' },
+    }),
+  );
+  assert.equal(queryInTx.success, true);
+
+  const commitResponse = await handle(
+    host,
+    request({
+      operation: 'context.transaction.commit',
+      transaction: { id: 'tx-1' },
+    }),
+  );
+  assert.equal(commitResponse.success, true);
+  if (commitResponse.success) {
+    assert.deepEqual(commitResponse.metadata.transaction, {
+      id: 'tx-1',
+      ownership: 'host-local',
+      expiry: 'until-finalized-or-host-disposal',
+      lifecycle: 'finalized',
+    });
+  }
 
   assert.deepEqual(calls, ['query', 'begin-transaction', 'tx.create:context/api/tx', 'tx.query', 'tx.commit']);
 });
 
-test('api-host returns stable errors for unknown routes, malformed requests, and unknown transaction handles', async () => {
+test('api-host returns stable contract errors for malformed envelopes and unknown transaction handles', async () => {
   const { host } = createMockHost();
 
-  const unknownRoute = await handle(host, { route: 'context.unknown' });
-  assert.equal(unknownRoute.status, 404);
-  assert.deepEqual(unknownRoute.body.error.code, 'api-host.route.not-found');
+  const malformed = await handle(
+    host,
+    request({
+      operation: 'context.create',
+      payload: { key: '' },
+    }),
+  );
+  assert.equal(malformed.success, false);
+  if (!malformed.success) {
+    assert.equal(malformed.error.code, 'api.invalid_request');
+  }
 
-  const malformed = await handle(host, {
-    route: 'context.create',
-    input: { key: '' },
+  const unsupportedVersion = await handle(host, {
+    operation: 'context.query',
+    resource: 'context',
+    version: '2.0.0',
   });
-  assert.equal(malformed.status, 400);
-  assert.deepEqual(malformed.body.error.code, 'api-host.request.invalid');
+  assert.equal(unsupportedVersion.success, false);
+  if (!unsupportedVersion.success) {
+    assert.equal(unsupportedVersion.error.code, 'api.invalid_request');
+  }
 
-  const unknownTransaction = await handle(host, {
-    route: 'context.transaction.commit',
-    input: { transaction_id: 'missing-tx' },
-  });
-  assert.equal(unknownTransaction.status, 404);
-  assert.deepEqual(unknownTransaction.body.error.code, 'api-host.context.transaction-not-found');
+  const unknownTransaction = await handle(
+    host,
+    request({
+      operation: 'context.transaction.commit',
+      transaction: { id: 'missing-tx' },
+    }),
+  );
+  assert.equal(unknownTransaction.success, false);
+  if (!unknownTransaction.success) {
+    assert.equal(unknownTransaction.error.code, 'api.not_found');
+    assert.equal(unknownTransaction.error.message, 'Unknown transaction handle.');
+  }
 });
 
-test('api-host translates context-service failures deterministically without leaking implementation details', async () => {
+test('api-host translates context-service failures into the stable HOST-3.3 taxonomy', async () => {
   const duplicateHost = createMockHost({
     create: async () => serviceFailure('create', 'context-service.duplicate-key', 'duplicate key'),
   }).host;
-  const duplicate = await handle(duplicateHost, {
-    route: 'context.create',
-    input: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
-  });
-  assert.equal(duplicate.status, 409);
-  assert.deepEqual(duplicate.body.error.code, 'api-host.context.duplicate-key');
+  const duplicate = await handle(
+    duplicateHost,
+    request({
+      operation: 'context.create',
+      payload: { key: 'context/api/1', value: { runtime_kind: 'context-record' } },
+    }),
+  );
+  assert.equal(duplicate.success, false);
+  if (!duplicate.success) {
+    assert.equal(duplicate.error.code, 'api.conflict');
+  }
 
   const invalidQueryHost = createMockHost({
     query: async () => serviceFailure('query', 'context-service.invalid-query', 'invalid query'),
   }).host;
-  const invalidQuery = await handle(invalidQueryHost, {
-    route: 'context.query',
-    input: { query: { limit: -1 } },
-  });
-  assert.equal(invalidQuery.status, 400);
-  assert.deepEqual(invalidQuery.body.error.code, 'api-host.context.invalid-query');
+  const invalidQuery = await handle(
+    invalidQueryHost,
+    request({
+      operation: 'context.query',
+      query: { limit: -1 },
+    }),
+  );
+  assert.equal(invalidQuery.success, false);
+  if (!invalidQuery.success) {
+    assert.equal(invalidQuery.error.code, 'api.validation_failed');
+  }
 
   const unavailableHost = createMockHost({
     retrieve: async () => serviceFailure('retrieve', 'context-service.unavailable', 'provider offline'),
   }).host;
-  const unavailable = await handle(unavailableHost, {
-    route: 'context.retrieve',
-    input: { key: 'context/api/1' },
-  });
-  assert.equal(unavailable.status, 503);
-  assert.deepEqual(unavailable.body.error.code, 'api-host.context.unavailable');
+  const unavailable = await handle(
+    unavailableHost,
+    request({
+      operation: 'context.retrieve',
+      payload: { key: 'context/api/1' },
+    }),
+  );
+  assert.equal(unavailable.success, false);
+  if (!unavailable.success) {
+    assert.equal(unavailable.error.code, 'api.unavailable');
+  }
 });
 
 test('api-host supports dependency injection by dispatching exclusively through the provided service implementation', async () => {
@@ -301,31 +422,58 @@ test('api-host supports dependency injection by dispatching exclusively through 
     },
   });
 
-  const response = await handle(host, {
-    route: 'context.retrieve',
-    input: { key: 'context/api/injected' },
-  });
+  const response = await handle(
+    host,
+    request({
+      operation: 'context.retrieve',
+      payload: { key: 'context/api/injected' },
+    }),
+  );
 
-  assert.equal(response.status, 200);
+  assert.equal(response.success, true);
   assert.equal(injectedCalls, 1);
-  assert.equal((response.body.data as ContextStoreRecord).key, 'context/api/injected/from-injected-service');
+  if (response.success) {
+    assert.equal((response.result as ContextStoreRecord).key, 'context/api/injected/from-injected-service');
+  }
 });
 
-test('api-host routes rollback through the injected transaction and evicts the handle after success', async () => {
+test('api-host evicts transaction handles after rollback and reports finalized lifecycle metadata', async () => {
   const { host, calls } = createMockHost();
 
-  await handle(host, { route: 'context.begin-transaction' });
-  const rollbackResponse = await handle(host, {
-    route: 'context.transaction.rollback',
-    input: { transaction_id: 'tx-1' },
-  });
-  assert.equal(rollbackResponse.status, 200);
+  await handle(
+    host,
+    request({
+      operation: 'context.transaction.begin',
+    }),
+  );
 
-  const afterRollback = await handle(host, {
-    route: 'context.transaction.commit',
-    input: { transaction_id: 'tx-1' },
-  });
-  assert.equal(afterRollback.status, 404);
-  assert.deepEqual(afterRollback.body.error.code, 'api-host.context.transaction-not-found');
+  const rollbackResponse = await handle(
+    host,
+    request({
+      operation: 'context.transaction.rollback',
+      transaction: { id: 'tx-1' },
+    }),
+  );
+  assert.equal(rollbackResponse.success, true);
+  if (rollbackResponse.success) {
+    assert.deepEqual(rollbackResponse.metadata.transaction, {
+      id: 'tx-1',
+      ownership: 'host-local',
+      expiry: 'until-finalized-or-host-disposal',
+      lifecycle: 'finalized',
+    });
+  }
+
+  const afterRollback = await handle(
+    host,
+    request({
+      operation: 'context.transaction.commit',
+      transaction: { id: 'tx-1' },
+    }),
+  );
+  assert.equal(afterRollback.success, false);
+  if (!afterRollback.success) {
+    assert.equal(afterRollback.error.code, 'api.not_found');
+  }
   assert.deepEqual(calls, ['begin-transaction', 'tx.rollback']);
 });

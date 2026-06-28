@@ -1,33 +1,34 @@
-import {
+import type {
+  ContextService,
   ContextServiceError,
-  type ContextService,
-  type ContextServiceResult,
-  type ContextServiceTransaction,
-  type ContextStoreCommitResult,
-  type ContextStoreRecord,
-  type ContextStoreRollbackResult,
+  ContextServiceResult,
+  ContextServiceTransaction,
+  ContextStoreCommitResult,
+  ContextStoreRecord,
+  ContextStoreRollbackResult,
 } from '@host/context-service';
 import type {
+  ApiDiagnostics,
   ApiErrorResponse,
   ApiHost,
   ApiHostErrorCode,
   ApiHostOptions,
+  ApiOperation,
   ApiRequest,
+  ApiResource,
   ApiResponse,
-  ApiRoute,
+  ApiResponseMetadata,
   ApiSuccessResponse,
+  ApiTransactionMetadata,
+  ApiWarning,
   ContextApiPayload,
-  ContextCreateRequest,
-  ContextDeleteRequest,
-  ContextQueryRequest,
-  ContextRetrieveRequest,
-  ContextTransactionDeleteRequest,
+  ContextDeletePayload,
+  ContextQueryPayload,
+  ContextRetrievePayload,
   ContextTransactionHandleResponse,
-  ContextTransactionMutationRequest,
-  ContextTransactionQueryRequest,
-  ContextTransactionRequest,
-  ContextTransactionRetrieveRequest,
+  ContextWritePayload,
 } from './contracts.js';
+import { API_HOST_OPERATION_REGISTRY, API_HOST_PROTOCOL_VERSION } from './contracts.js';
 
 const freeze = <TValue>(value: TValue): TValue => {
   if (!value || typeof value !== 'object') {
@@ -44,317 +45,403 @@ const freeze = <TValue>(value: TValue): TValue => {
   return value;
 };
 
+const EMPTY_WARNINGS = freeze([] as readonly ApiWarning[]);
+const SUPPORTED_PROTOCOL_VERSIONS = new Set<string>([API_HOST_PROTOCOL_VERSION]);
+const operationSet = new Set<ApiOperation>(API_HOST_OPERATION_REGISTRY);
+
 const isObject = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const isInteger = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value);
+const isIsoTimestamp = (value: unknown): value is string => isString(value) && !Number.isNaN(Date.parse(value));
 
-const response = <TValue>(status: number, data: TValue): ApiSuccessResponse<TValue> =>
+interface CanonicalApiRequest {
+  readonly version: string;
+  readonly operation: ApiOperation;
+  readonly resource: ApiResource;
+  readonly payload?: unknown;
+  readonly query?: ApiRequest['query'];
+  readonly metadata?: Readonly<Record<string, unknown>> | undefined;
+  readonly correlation_id?: string | undefined;
+  readonly request_id?: string | undefined;
+  readonly timestamp?: string | undefined;
+  readonly transaction?: {
+    readonly id: string;
+  } | undefined;
+}
+
+interface StoredTransaction {
+  readonly transaction: ContextServiceTransaction;
+  readonly metadata: ApiTransactionMetadata;
+}
+
+const successDiagnostics = (): ApiDiagnostics =>
   freeze({
-    status,
-    body: {
-      data,
-    },
+    handled_by: '@host/api-host',
+    category: 'success',
   });
 
-const errorResponse = (status: number, code: ApiHostErrorCode, message: string): ApiErrorResponse =>
+const errorDiagnostics = (): ApiDiagnostics =>
   freeze({
-    status,
-    body: {
-      error: {
-        code,
-        message,
-      },
-    },
+    handled_by: '@host/api-host',
+    category: 'error',
   });
 
-const routeSet = new Set<ApiRoute>([
-  'context.create',
-  'context.retrieve',
-  'context.update',
-  'context.delete',
-  'context.query',
-  'context.begin-transaction',
-  'context.transaction.create',
-  'context.transaction.retrieve',
-  'context.transaction.update',
-  'context.transaction.delete',
-  'context.transaction.query',
-  'context.transaction.commit',
-  'context.transaction.rollback',
-]);
+const responseMetadata = (
+  request: Pick<CanonicalApiRequest, 'operation' | 'resource' | 'correlation_id' | 'request_id' | 'timestamp'>,
+  transaction?: ApiTransactionMetadata,
+): ApiResponseMetadata =>
+  freeze({
+    operation: request.operation,
+    resource: request.resource,
+    ...(request.correlation_id ? { correlation_id: request.correlation_id } : {}),
+    ...(request.request_id ? { request_id: request.request_id } : {}),
+    ...(request.timestamp ? { timestamp: request.timestamp } : {}),
+    ...(transaction ? { transaction } : {}),
+  });
+
+const failureMetadata = (request: Partial<ApiRequest>, transaction?: ApiTransactionMetadata): ApiResponseMetadata =>
+  freeze({
+    ...(isString(request.operation) && operationSet.has(request.operation as ApiOperation) ? { operation: request.operation as ApiOperation } : {}),
+    ...(request.resource === 'context' ? { resource: 'context' as const } : {}),
+    ...(isString(request.correlation_id) ? { correlation_id: request.correlation_id } : {}),
+    ...(isString(request.request_id) ? { request_id: request.request_id } : {}),
+    ...(isIsoTimestamp(request.timestamp) ? { timestamp: request.timestamp } : {}),
+    ...(transaction ? { transaction } : {}),
+  });
+
+const successResponse = <TValue>(
+  request: CanonicalApiRequest,
+  result: TValue,
+  transaction?: ApiTransactionMetadata,
+): ApiSuccessResponse<TValue> =>
+  freeze({
+    success: true,
+    result,
+    metadata: responseMetadata(request, transaction),
+    diagnostics: successDiagnostics(),
+    warnings: EMPTY_WARNINGS,
+    version: API_HOST_PROTOCOL_VERSION,
+  });
+
+const errorResponse = (
+  request: Partial<ApiRequest>,
+  code: ApiHostErrorCode,
+  message: string,
+  transaction?: ApiTransactionMetadata,
+): ApiErrorResponse =>
+  freeze({
+    success: false,
+    error: {
+      code,
+      message,
+    },
+    metadata: failureMetadata(request, transaction),
+    diagnostics: errorDiagnostics(),
+    warnings: EMPTY_WARNINGS,
+    version: API_HOST_PROTOCOL_VERSION,
+  });
 
 const isExpectedVersionOptions = (value: unknown): value is { expected_version?: number | undefined } =>
   value === undefined ||
   (isObject(value) && (value.expected_version === undefined || isInteger(value.expected_version)));
 
-const asCreateRequest = (value: unknown): ContextCreateRequest | undefined => {
+const asWritePayload = (value: unknown): ContextWritePayload | undefined => {
   if (!isObject(value) || !isString(value.key) || !('value' in value) || !isExpectedVersionOptions(value.options)) {
     return undefined;
   }
 
-  return value as unknown as ContextCreateRequest;
+  return value as unknown as ContextWritePayload;
 };
 
-const asRetrieveRequest = (value: unknown): ContextRetrieveRequest | undefined => {
+const asRetrievePayload = (value: unknown): ContextRetrievePayload | undefined => {
   if (!isObject(value) || !isString(value.key)) {
     return undefined;
   }
 
-  return value as unknown as ContextRetrieveRequest;
+  return value as unknown as ContextRetrievePayload;
 };
 
-const asDeleteRequest = (value: unknown): ContextDeleteRequest | undefined => {
+const asDeletePayload = (value: unknown): ContextDeletePayload | undefined => {
   if (!isObject(value) || !isString(value.key) || !isExpectedVersionOptions(value.options)) {
     return undefined;
   }
 
-  return value as unknown as ContextDeleteRequest;
+  return value as unknown as ContextDeletePayload;
 };
 
-const asQueryRequest = (value: unknown): ContextQueryRequest | undefined => {
-  if (value === undefined) {
+const asQueryPayload = (query: unknown, payload: unknown): ContextQueryPayload | undefined => {
+  if (query !== undefined) {
+    if (!isObject(query)) {
+      return undefined;
+    }
+    return { query: query as ContextQueryPayload['query'] };
+  }
+
+  if (payload === undefined) {
     return {};
   }
-  if (!isObject(value)) {
+
+  if (!isObject(payload)) {
     return undefined;
   }
 
-  return value as ContextQueryRequest;
-};
-
-const asTransactionRequest = (value: unknown): ContextTransactionRequest | undefined => {
-  if (!isObject(value) || !isString(value.transaction_id)) {
+  if ('query' in payload && payload.query !== undefined && !isObject(payload.query)) {
     return undefined;
   }
 
-  return value as unknown as ContextTransactionRequest;
+  return payload as ContextQueryPayload;
 };
 
-const asTransactionMutationRequest = (value: unknown): ContextTransactionMutationRequest | undefined => {
-  if (!isObject(value) || !isString(value.transaction_id) || !isString(value.key) || !('value' in value) || !isExpectedVersionOptions(value.options)) {
+const parseRequest = (request: ApiRequest | unknown): CanonicalApiRequest | undefined => {
+  if (!isObject(request) || !isString(request.operation) || request.resource !== 'context') {
     return undefined;
   }
 
-  return value as unknown as ContextTransactionMutationRequest;
-};
-
-const asTransactionDeleteRequest = (value: unknown): ContextTransactionDeleteRequest | undefined => {
-  if (!isObject(value) || !isString(value.transaction_id) || !isString(value.key) || !isExpectedVersionOptions(value.options)) {
+  const version = request.version ?? API_HOST_PROTOCOL_VERSION;
+  if (!isString(version) || !SUPPORTED_PROTOCOL_VERSIONS.has(version)) {
     return undefined;
   }
 
-  return value as unknown as ContextTransactionDeleteRequest;
-};
-
-const asTransactionRetrieveRequest = (value: unknown): ContextTransactionRetrieveRequest | undefined => {
-  if (!isObject(value) || !isString(value.transaction_id) || !isString(value.key)) {
+  if (!operationSet.has(request.operation as ApiOperation)) {
     return undefined;
   }
 
-  return value as unknown as ContextTransactionRetrieveRequest;
-};
-
-const asTransactionQueryRequest = (value: unknown): ContextTransactionQueryRequest | undefined => {
-  if (!isObject(value) || !isString(value.transaction_id)) {
+  if (request.metadata !== undefined && !isObject(request.metadata)) {
     return undefined;
   }
 
-  return value as unknown as ContextTransactionQueryRequest;
+  if (request.correlation_id !== undefined && !isString(request.correlation_id)) {
+    return undefined;
+  }
+
+  if (request.request_id !== undefined && !isString(request.request_id)) {
+    return undefined;
+  }
+
+  if (request.timestamp !== undefined && !isIsoTimestamp(request.timestamp)) {
+    return undefined;
+  }
+
+  if (request.query !== undefined && !isObject(request.query)) {
+    return undefined;
+  }
+
+  if (request.transaction !== undefined) {
+    if (!isObject(request.transaction) || !isString(request.transaction.id)) {
+      return undefined;
+    }
+  }
+
+  return request as unknown as CanonicalApiRequest;
 };
 
-const mapContextError = (error: ContextServiceError): ApiErrorResponse => {
+const transactionMetadata = (transactionId: string, lifecycle: 'active' | 'finalized'): ApiTransactionMetadata =>
+  freeze({
+    id: transactionId,
+    ownership: 'host-local',
+    expiry: 'until-finalized-or-host-disposal',
+    lifecycle,
+  });
+
+const mapContextError = (request: CanonicalApiRequest, error: ContextServiceError, transaction?: ApiTransactionMetadata): ApiErrorResponse => {
   switch (error.code) {
     case 'context-service.duplicate-key':
-      return errorResponse(409, 'api-host.context.duplicate-key', error.message);
-    case 'context-service.not-found':
-      return errorResponse(404, 'api-host.context.not-found', error.message);
     case 'context-service.version-conflict':
-      return errorResponse(409, 'api-host.context.version-conflict', error.message);
+      return errorResponse(request, 'api.conflict', error.message, transaction);
+    case 'context-service.not-found':
+      return errorResponse(request, 'api.not_found', error.message, transaction);
     case 'context-service.invalid-query':
-      return errorResponse(400, 'api-host.context.invalid-query', error.message);
+      return errorResponse(request, 'api.validation_failed', error.message, transaction);
     case 'context-service.transaction-closed':
-      return errorResponse(409, 'api-host.context.transaction-closed', error.message);
+      return errorResponse(request, 'api.transaction_closed', error.message, transaction);
     case 'context-service.unavailable':
-      return errorResponse(503, 'api-host.context.unavailable', error.message);
+      return errorResponse(request, 'api.unavailable', error.message, transaction);
   }
 };
 
 class DefaultApiHost implements ApiHost {
   readonly #context: ContextService;
-  readonly #transactions = new Map<string, ContextServiceTransaction>();
+  readonly #transactions = new Map<string, StoredTransaction>();
 
   constructor(options: ApiHostOptions) {
     this.#context = options.services.context;
   }
 
   async handle(request: ApiRequest): Promise<ApiResponse> {
-    if (!isObject(request) || !isString(request.route)) {
-      return errorResponse(400, 'api-host.request.invalid', 'API request must provide a non-empty route string.');
-    }
-
-    if (!routeSet.has(request.route as ApiRoute)) {
-      return errorResponse(404, 'api-host.route.not-found', `Unknown API route: ${request.route}`);
+    const parsed = parseRequest(request);
+    if (!parsed) {
+      return errorResponse(
+        isObject(request) ? request : {},
+        'api.invalid_request',
+        'API requests must provide a supported version, canonical operation, resource, and valid envelope fields.',
+      );
     }
 
     try {
-      return await this.#dispatch(request.route as ApiRoute, request.input);
+      return await this.#dispatch(parsed);
     } catch {
-      return errorResponse(500, 'api-host.internal-error', 'Unexpected API host failure.');
+      return errorResponse(parsed, 'api.internal', 'Unexpected API host failure.');
     }
   }
 
-  async #dispatch(route: ApiRoute, input: unknown): Promise<ApiResponse> {
-    switch (route) {
+  async #dispatch(request: CanonicalApiRequest): Promise<ApiResponse> {
+    switch (request.operation) {
       case 'context.create': {
-        const parsed = asCreateRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.create requires { key, value, options? }.');
+        const payload = asWritePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.create requires payload { key, value, options? }.');
         }
-        return this.#mapResult(201, await this.#context.create(parsed.key, parsed.value as never, parsed.options ?? {}));
+        return this.#mapResult(request, await this.#context.create(payload.key, payload.value as never, payload.options ?? {}));
       }
       case 'context.retrieve': {
-        const parsed = asRetrieveRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.retrieve requires { key }.');
+        const payload = asRetrievePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.retrieve requires payload { key }.');
         }
-        return this.#mapResult(200, await this.#context.retrieve(parsed.key));
+        return this.#mapResult(request, await this.#context.retrieve(payload.key));
       }
       case 'context.update': {
-        const parsed = asCreateRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.update requires { key, value, options? }.');
+        const payload = asWritePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.update requires payload { key, value, options? }.');
         }
-        return this.#mapResult(200, await this.#context.update(parsed.key, parsed.value as never, parsed.options ?? {}));
+        return this.#mapResult(request, await this.#context.update(payload.key, payload.value as never, payload.options ?? {}));
       }
       case 'context.delete': {
-        const parsed = asDeleteRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.delete requires { key, options? }.');
+        const payload = asDeletePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.delete requires payload { key, options? }.');
         }
-        return this.#mapResult(200, await this.#context.delete(parsed.key, parsed.options ?? {}));
+        return this.#mapResult(request, await this.#context.delete(payload.key, payload.options ?? {}));
       }
       case 'context.query': {
-        const parsed = asQueryRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.query requires { query? }.');
+        const payload = asQueryPayload(request.query, request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.query requires query {} or payload { query? }.');
         }
-        return this.#mapResult(200, await this.#context.query(parsed.query ?? {}));
+        return this.#mapResult(request, await this.#context.query(payload.query ?? {}));
       }
-      case 'context.begin-transaction': {
+      case 'context.transaction.begin': {
+        if (request.transaction) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.begin must not provide a transaction handle.');
+        }
         const begun = await this.#context.beginTransaction();
         if (!begun.ok) {
-          return mapContextError(begun.error);
+          return mapContextError(request, begun.error);
         }
-        this.#transactions.set(begun.value.id, begun.value);
+        const metadata = transactionMetadata(begun.value.id, 'active');
+        this.#transactions.set(begun.value.id, {
+          transaction: begun.value,
+          metadata,
+        });
         const payload: ContextTransactionHandleResponse = freeze({
           transaction_id: begun.value.id,
           state: begun.value.state,
         });
-        return response(201, payload);
+        return successResponse(request, payload, metadata);
       }
       case 'context.transaction.create': {
-        const parsed = asTransactionMutationRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.create requires { transaction_id, key, value, options? }.');
+        const payload = asWritePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.create requires payload { key, value, options? }.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(201, await transaction.create(parsed.key, parsed.value as never, parsed.options ?? {}));
+        return this.#mapResult(request, await stored.transaction.create(payload.key, payload.value as never, payload.options ?? {}), stored.metadata);
       }
       case 'context.transaction.retrieve': {
-        const parsed = asTransactionRetrieveRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.retrieve requires { transaction_id, key }.');
+        const payload = asRetrievePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.retrieve requires payload { key }.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(200, await transaction.retrieve(parsed.key));
+        return this.#mapResult(request, await stored.transaction.retrieve(payload.key), stored.metadata);
       }
       case 'context.transaction.update': {
-        const parsed = asTransactionMutationRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.update requires { transaction_id, key, value, options? }.');
+        const payload = asWritePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.update requires payload { key, value, options? }.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(200, await transaction.update(parsed.key, parsed.value as never, parsed.options ?? {}));
+        return this.#mapResult(request, await stored.transaction.update(payload.key, payload.value as never, payload.options ?? {}), stored.metadata);
       }
       case 'context.transaction.delete': {
-        const parsed = asTransactionDeleteRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.delete requires { transaction_id, key, options? }.');
+        const payload = asDeletePayload(request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.delete requires payload { key, options? }.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(200, await transaction.delete(parsed.key, parsed.options ?? {}));
+        return this.#mapResult(request, await stored.transaction.delete(payload.key, payload.options ?? {}), stored.metadata);
       }
       case 'context.transaction.query': {
-        const parsed = asTransactionQueryRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.query requires { transaction_id, query? }.');
+        const payload = asQueryPayload(request.query, request.payload);
+        if (!payload) {
+          return errorResponse(request, 'api.invalid_request', 'context.transaction.query requires query {} or payload { query? }.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(200, await transaction.query(parsed.query ?? {}));
+        return this.#mapResult(request, await stored.transaction.query(payload.query ?? {}), stored.metadata);
       }
       case 'context.transaction.commit': {
-        const parsed = asTransactionRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.commit requires { transaction_id }.');
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
-        }
-        const result = await transaction.commit();
+        const result = await stored.transaction.commit();
         if (result.ok) {
-          this.#transactions.delete(parsed.transaction_id);
+          this.#transactions.delete(stored.transaction.id);
         }
-        return this.#mapResult(200, result);
+        return this.#mapResult(request, result, transactionMetadata(stored.transaction.id, 'finalized'));
       }
       case 'context.transaction.rollback': {
-        const parsed = asTransactionRequest(input);
-        if (!parsed) {
-          return errorResponse(400, 'api-host.request.invalid', 'context.transaction.rollback requires { transaction_id }.');
+        const stored = this.#lookupTransaction(request);
+        if (!stored) {
+          return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        const transaction = this.#transactions.get(parsed.transaction_id);
-        if (!transaction) {
-          return errorResponse(404, 'api-host.context.transaction-not-found', `Unknown transaction: ${parsed.transaction_id}`);
-        }
-        const result = await transaction.rollback();
+        const result = await stored.transaction.rollback();
         if (result.ok) {
-          this.#transactions.delete(parsed.transaction_id);
+          this.#transactions.delete(stored.transaction.id);
         }
-        return this.#mapResult(200, result);
+        return this.#mapResult(request, result, transactionMetadata(stored.transaction.id, 'finalized'));
       }
     }
+  }
 
-    return errorResponse(404, 'api-host.route.not-found', `Unknown API route: ${route}`);
+  #lookupTransaction(request: CanonicalApiRequest): StoredTransaction | undefined {
+    if (!request.transaction) {
+      return undefined;
+    }
+
+    return this.#transactions.get(request.transaction.id);
   }
 
   #mapResult(
-    status: number,
+    request: CanonicalApiRequest,
     result:
       | ContextServiceResult<ContextStoreRecord>
       | ContextServiceResult<ContextApiPayload>
       | ContextServiceResult<ContextStoreCommitResult>
       | ContextServiceResult<ContextStoreRollbackResult>,
+    transaction?: ApiTransactionMetadata,
   ): ApiResponse {
     if (!result.ok) {
-      return mapContextError(result.error);
+      return mapContextError(request, result.error, transaction);
     }
 
-    return response(status, result.value);
+    return successResponse(request, result.value, transaction);
   }
 }
 

@@ -135,7 +135,7 @@ Responsibilities:
 - orchestration
 - asynchronous workflows
 - persistence-backed APIs
-- external transports
+- external adapter boundaries
 - composition of execution-layer capabilities
 - application-specific policies
 
@@ -325,7 +325,9 @@ HOST-3.0 establishes that future boundary as the Application Layer, where orches
 
 HOST-3.1 implements `@host/context-service` as the canonical persisted context service boundary above the execution stack.
 
-HOST-3.2 implements `@host/api-host` as the canonical transport-neutral composition point between future transports and application services, without introducing HTTP frameworks or provider awareness.
+HOST-3.2 implements `@host/api-host` as the canonical transport-neutral composition point between future adapters and application services, without introducing adapter frameworks or provider awareness.
+
+HOST-3.3 hardens `@host/api-host` as protocol version `1.0.0`, freezing the canonical request envelope, response envelope, operation registry, error taxonomy, and transaction-handle semantics before adapter implementation begins.
 
 ## Traceability Architecture
 
@@ -387,6 +389,7 @@ Current status:
 - HOST-3 architecture baseline established
 - `@host/context-service` implemented
 - `@host/api-host` implemented
+- `@host/api-host` contract frozen at HOST-3.3 / protocol `1.0.0`
 
 ## Reading Order
 

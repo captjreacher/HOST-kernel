@@ -40,11 +40,22 @@ This entry records the first Application Layer implementation.
 This entry records the transport-neutral API host boundary.
 
 - `@host/api-host` is now implemented as the canonical HOST-3 composition point between future transports and application services
-- the host exposes a stable request and response contract without starting an HTTP listener or importing transport frameworks
+- the host exposes a stable request and response contract without starting adapter runtimes or importing adapter frameworks
 - context CRUD, query, and transaction routes now dispatch through injected `@host/context-service` instances
 - service failures are translated into stable API responses without exposing provider, filesystem, or SQLite details
 - transaction handles are managed inside the API host boundary so future adapters can remain protocol-specific only
 - dependency rules now enforce `@host/api-host` -> `@host/context-service` only
+
+## HOST-3.3 - API Host Contract Hardening
+
+This entry records the HOST-3.3 protocol freeze for `@host/api-host`.
+
+- the canonical request envelope is now frozen around `version`, `operation`, `resource`, `payload`, `query`, `transaction`, `metadata`, `correlation_id`, `request_id`, and `timestamp`
+- the canonical response envelope is now frozen around `success`, `result`, `error`, `metadata`, `diagnostics`, `warnings`, and `version`
+- the authoritative operation registry now uses canonical names beginning with `context.create` and `context.transaction.begin`
+- API host errors now translate into the stable taxonomy `api.invalid_request`, `api.validation_failed`, `api.not_found`, `api.conflict`, `api.transaction_closed`, `api.unavailable`, and `api.internal`
+- transaction handles are now documented and enforced as host-local opaque identifiers that remain valid until finalization or host disposal
+- protocol version `1.0.0` is now the frozen application-layer contract baseline for future adapter work
 
 ## HOST-2.8A - Context Persistence Boundary Decision
 

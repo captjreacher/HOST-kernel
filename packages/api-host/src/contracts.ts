@@ -7,55 +7,103 @@ import type {
   ContextStoreRollbackResult,
 } from '@host/context-service';
 
-export type ApiRoute =
-  | 'context.create'
-  | 'context.retrieve'
-  | 'context.update'
-  | 'context.delete'
-  | 'context.query'
-  | 'context.begin-transaction'
-  | 'context.transaction.create'
-  | 'context.transaction.retrieve'
-  | 'context.transaction.update'
-  | 'context.transaction.delete'
-  | 'context.transaction.query'
-  | 'context.transaction.commit'
-  | 'context.transaction.rollback';
+export const API_HOST_PROTOCOL_VERSION = '1.0.0' as const;
+
+export const API_HOST_RESOURCE_REGISTRY = ['context'] as const;
+export type ApiResource = (typeof API_HOST_RESOURCE_REGISTRY)[number];
+
+export const API_HOST_OPERATION_REGISTRY = [
+  'context.create',
+  'context.retrieve',
+  'context.update',
+  'context.delete',
+  'context.query',
+  'context.transaction.begin',
+  'context.transaction.create',
+  'context.transaction.retrieve',
+  'context.transaction.update',
+  'context.transaction.delete',
+  'context.transaction.query',
+  'context.transaction.commit',
+  'context.transaction.rollback',
+] as const;
+
+export type ApiOperation = (typeof API_HOST_OPERATION_REGISTRY)[number];
+export type ApiProtocolVersion = typeof API_HOST_PROTOCOL_VERSION;
+
+export interface ApiTransactionReference {
+  readonly id: string;
+}
 
 export interface ApiRequest {
-  readonly route: string;
-  readonly input?: unknown;
+  readonly version?: string | undefined;
+  readonly operation: string;
+  readonly resource: string;
+  readonly payload?: unknown;
+  readonly query?: ContextQuery | undefined;
+  readonly transaction?: ApiTransactionReference | undefined;
+  readonly metadata?: Readonly<Record<string, unknown>> | undefined;
+  readonly correlation_id?: string | undefined;
+  readonly request_id?: string | undefined;
+  readonly timestamp?: string | undefined;
 }
 
 export type ApiHostErrorCode =
-  | 'api-host.request.invalid'
-  | 'api-host.route.not-found'
-  | 'api-host.context.duplicate-key'
-  | 'api-host.context.not-found'
-  | 'api-host.context.version-conflict'
-  | 'api-host.context.invalid-query'
-  | 'api-host.context.transaction-closed'
-  | 'api-host.context.transaction-not-found'
-  | 'api-host.context.unavailable'
-  | 'api-host.internal-error';
+  | 'api.invalid_request'
+  | 'api.validation_failed'
+  | 'api.not_found'
+  | 'api.conflict'
+  | 'api.transaction_closed'
+  | 'api.unavailable'
+  | 'api.internal';
 
 export interface ApiError {
   readonly code: ApiHostErrorCode;
   readonly message: string;
 }
 
+export interface ApiTransactionMetadata {
+  readonly id: string;
+  readonly ownership: 'host-local';
+  readonly expiry: 'until-finalized-or-host-disposal';
+  readonly lifecycle: 'active' | 'finalized';
+}
+
+export interface ApiResponseMetadata {
+  readonly operation?: ApiOperation | undefined;
+  readonly resource?: ApiResource | undefined;
+  readonly correlation_id?: string | undefined;
+  readonly request_id?: string | undefined;
+  readonly timestamp?: string | undefined;
+  readonly transaction?: ApiTransactionMetadata | undefined;
+}
+
+export interface ApiDiagnostics {
+  readonly handled_by: '@host/api-host';
+  readonly category: 'success' | 'error';
+}
+
+export interface ApiWarning {
+  readonly code: string;
+  readonly message: string;
+}
+
 export interface ApiSuccessResponse<TValue = unknown> {
-  readonly status: number;
-  readonly body: {
-    readonly data: TValue;
-  };
+  readonly success: true;
+  readonly result: TValue;
+  readonly metadata: ApiResponseMetadata;
+  readonly diagnostics: ApiDiagnostics;
+  readonly warnings: readonly ApiWarning[];
+  readonly version: ApiProtocolVersion;
 }
 
 export interface ApiErrorResponse {
-  readonly status: number;
-  readonly body: {
-    readonly error: ApiError;
-  };
+  readonly success: false;
+  readonly error: ApiError;
+  readonly metadata: ApiResponseMetadata;
+  readonly diagnostics: ApiDiagnostics;
+  readonly warnings: readonly ApiWarning[];
+  readonly version: ApiProtocolVersion;
 }
 
 export type ApiResponse<TValue = unknown> = ApiSuccessResponse<TValue> | ApiErrorResponse;
@@ -72,7 +120,7 @@ export interface ApiHost {
   handle(request: ApiRequest): Promise<ApiResponse>;
 }
 
-export interface ContextCreateRequest {
+export interface ContextWritePayload {
   readonly key: string;
   readonly value: unknown;
   readonly options?: {
@@ -80,45 +128,18 @@ export interface ContextCreateRequest {
   } | undefined;
 }
 
-export interface ContextRetrieveRequest {
+export interface ContextRetrievePayload {
   readonly key: string;
 }
 
-export interface ContextDeleteRequest {
-  readonly key: string;
-  readonly options?: {
-    readonly expected_version?: number | undefined;
-  } | undefined;
-}
-
-export interface ContextQueryRequest {
-  readonly query?: ContextQuery | undefined;
-}
-
-export interface ContextTransactionRequest {
-  readonly transaction_id: string;
-}
-
-export interface ContextTransactionMutationRequest extends ContextTransactionRequest {
-  readonly key: string;
-  readonly value: unknown;
-  readonly options?: {
-    readonly expected_version?: number | undefined;
-  } | undefined;
-}
-
-export interface ContextTransactionDeleteRequest extends ContextTransactionRequest {
+export interface ContextDeletePayload {
   readonly key: string;
   readonly options?: {
     readonly expected_version?: number | undefined;
   } | undefined;
 }
 
-export interface ContextTransactionRetrieveRequest extends ContextTransactionRequest {
-  readonly key: string;
-}
-
-export interface ContextTransactionQueryRequest extends ContextTransactionRequest {
+export interface ContextQueryPayload {
   readonly query?: ContextQuery | undefined;
 }
 

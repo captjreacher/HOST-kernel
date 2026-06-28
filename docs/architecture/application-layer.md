@@ -11,7 +11,7 @@ It is responsible for:
 - orchestration of execution-layer capabilities
 - asynchronous workflows
 - persistence-backed APIs
-- external transports
+- external adapter boundaries
 - application-specific policies
 - composition roots that bind approved execution and provider packages into product-facing services
 
@@ -116,22 +116,22 @@ Must not:
 Purpose:
 
 - expose a transport-neutral request and response boundary for HOST-3 capabilities
-- dispatch transport-independent requests into application services
+- dispatch canonical protocol requests into application services
 - translate application-service failures into stable API responses
-- act as the canonical composition point for future REST, GraphQL, CLI, MCP, gRPC, and message-bus adapters
+- act as the canonical composition point for future adapter implementations without embedding adapter semantics
 
 Must not:
 
-- start an HTTP listener
-- import transport frameworks
+- implement listeners or adapter runtimes
+- import adapter frameworks or SDKs
 - expose provider lifecycle or provider-specific details
 - replace `kernel-api` as the HOST-1 synchronous runtime facade
 
 Implementation status:
 
-- implemented in HOST-3.2 as `packages/api-host`
+- implemented in HOST-3.2 and hardened in HOST-3.3 as `packages/api-host`
 - depends only on `@host/context-service`
-- owns route dispatch and transaction handle management for persisted context operations
+- owns the frozen operation registry, canonical request and response envelopes, stable API error taxonomy, and transaction handle management for persisted context operations
 
 ## Dependency Rules
 
@@ -158,7 +158,7 @@ Allowed:
 - Provider packages may depend downward on `@host/context-persistence` only, as frozen by ADR-004.
 - Application packages may depend downward on execution abstractions and may bind approved provider packages at application composition roots.
 - `@host/context-service` is the canonical entry point for persisted context operations and depends only on `@host/context-persistence`.
-- `@host/api-host` is the canonical composition point between transports and application services and depends only on `@host/context-service`.
+- `@host/api-host` is the canonical composition point between adapters and application services and depends only on `@host/context-service`.
 - Product code may depend on application packages and transport surfaces.
 
 Forbidden:
@@ -168,6 +168,7 @@ Forbidden:
 - no provider package may depend on applications or products
 - no application package may redefine kernel concepts, taxonomy, runtime contracts, or provider contracts
 - no application package may introduce provider awareness into public API contracts
+- no application package may introduce adapter semantics into `@host/api-host` contracts
 - no product package may become the architectural home of persistence-backed shared APIs that belong in HOST-3
 
 ## API Boundary
@@ -176,7 +177,7 @@ The API split is now explicit:
 
 - synchronous runtime APIs remain in HOST-1 through `kernel-api`
 - persistence composition remains in HOST-2 through `context-runtime` -> `context-store` -> `context-persistence`
-- persistence-backed APIs originate in HOST-3 transports and application services
+- persistence-backed APIs originate in HOST-3 adapters and application services
 - persisted context orchestration begins in `@host/context-service`
 - transport-neutral API dispatch begins in `@host/api-host`
 
@@ -185,9 +186,9 @@ The API split is now explicit:
 ```text
 Caller
   ->
-future transport
+future adapter
   ->
-@host/api-host (HOST-3 route dispatch and API translation)
+@host/api-host (HOST-3 operation dispatch and API translation)
   ->
 @host/context-service (HOST-3 orchestration and policy)
   ->
@@ -215,6 +216,9 @@ This preserves the ADR-005 rule that persistence-backed APIs do not extend the H
 ## Baseline Declaration
 
 The HOST-3 application layer is approved as an architecture baseline.
+
+The `@host/api-host` contract is frozen at protocol version `1.0.0`.
+Future work may add adapters, but adapter work must implement the HOST-3.3 contract rather than redefining it.
 
 This baseline defines boundaries only.
 It does not approve package creation, business logic, provider selection, or product functionality.
