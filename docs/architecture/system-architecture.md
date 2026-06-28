@@ -10,7 +10,7 @@
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](../constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md), [ADR-005](ADR-005-context-persistence-api-boundary.md), [ADR-006](ADR-006-application-layer-architecture-baseline.md), [Application Layer Architecture](application-layer.md) |
+| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md), [ADR-005](ADR-005-context-persistence-api-boundary.md), [ADR-006](ADR-006-application-layer-architecture-baseline.md), [ADR-007](ADR-007-transport-adapter-architecture-baseline.md), [Application Layer Architecture](application-layer.md) |
 
 ## Executive Overview
 
@@ -139,7 +139,7 @@ Responsibilities:
 - composition of execution-layer capabilities
 - application-specific policies
 
-The canonical execution stack is frozen as:
+The canonical execution and application stack is frozen as:
 
 ```text
 Knowledge Plane
@@ -178,10 +178,16 @@ application-runtime
 
 ↓
 
+Transport Layer
+
+future transport adapter
+
+↓
+
 Products
 ```
 
-Product repositories remain the implementation and delivery plane for product code, but they do not own the Knowledge Plane, Execution Layer, provider layer, or Application Layer package boundaries defined above.
+Product repositories remain the implementation and delivery plane for product code, but they do not own the Knowledge Plane, Execution Layer, provider layer, Application Layer package boundaries, or the conceptual Transport Layer boundary defined above.
 
 ## Repository Interaction Model
 
@@ -211,7 +217,8 @@ Ownership boundaries remain unchanged:
 - HOST owns governance and orchestration.
 - CONTEXT owns canonical meaning and evidence.
 - Roadmap owns sequencing and commitments.
-- HOST application architecture owns shared orchestration, persistence-backed APIs, and transport boundaries above the execution stack.
+- HOST application architecture owns shared orchestration, persistence-backed APIs, and the frozen API Host protocol boundary above the execution stack.
+- The Transport Layer owns protocol-specific translation between products or external callers and the frozen Application Layer protocol.
 - Product repositories own implementation and delivery artifacts beneath that shared application boundary.
 
 ## Request Lifecycle
@@ -321,13 +328,15 @@ HOST-2.5 introduces the first concrete provider-layer implementation as a filesy
 HOST-2.8A further clarifies that persistence-backed API endpoints do not belong in HOST-1.
 The existing `kernel-api` context endpoints remain runtime-only, while persistence-backed transports are deferred to a future execution/application boundary according to [ADR-005](ADR-005-context-persistence-api-boundary.md).
 
-HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, external transports, and application-specific policies begin without altering HOST-1 or HOST-2 contracts. See [Application Layer Architecture](application-layer.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).
+HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, API hosting, and application-specific policies begin without altering HOST-1 or HOST-2 contracts. See [Application Layer Architecture](application-layer.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).
 
 HOST-3.1 implements `@host/context-service` as the canonical persisted context service boundary above the execution stack.
 
 HOST-3.2 implements `@host/api-host` as the canonical transport-neutral composition point between future adapters and application services, without introducing adapter frameworks or provider awareness.
 
 HOST-3.3 hardens `@host/api-host` as protocol version `1.0.0`, freezing the canonical request envelope, response envelope, operation registry, error taxonomy, and transaction-handle semantics before adapter implementation begins.
+
+HOST-3.4 establishes the Transport Layer as a separate architecture boundary above `@host/api-host`, responsible for protocol translation, authentication hand-off, serialization, correlation, and tracing propagation without owning orchestration or business logic.
 
 ## Traceability Architecture
 
@@ -390,6 +399,7 @@ Current status:
 - `@host/context-service` implemented
 - `@host/api-host` implemented
 - `@host/api-host` contract frozen at HOST-3.3 / protocol `1.0.0`
+- Transport Layer baseline established at HOST-3.4
 
 ## Reading Order
 

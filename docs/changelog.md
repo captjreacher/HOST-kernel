@@ -57,6 +57,17 @@ This entry records the HOST-3.3 protocol freeze for `@host/api-host`.
 - transaction handles are now documented and enforced as host-local opaque identifiers that remain valid until finalization or host disposal
 - protocol version `1.0.0` is now the frozen application-layer contract baseline for future adapter work
 
+## HOST-3.4 - Transport Adapter Architecture Baseline
+
+This entry records the HOST-3.4 architecture baseline for future transport adapters.
+
+- the Transport Layer is now defined as the boundary above `@host/api-host` and below products or external callers
+- transport adapters are now documented as protocol translators that depend only on the frozen API Host protocol
+- the canonical transport responsibilities now include protocol translation, authentication hand-off, serialization, deserialization, protocol-specific status mapping, request correlation, and tracing propagation
+- transport adapters are now forbidden from owning orchestration, persistence, business rules, provider access, or kernel concepts
+- the initial transport catalogue is now recorded as REST, GraphQL, MCP, CLI, gRPC, Message Queue, and WebSocket
+- `ADR-007` now freezes the dependency rule `transport-adapter` -> `@host/api-host` while forbidding transport dependencies on execution packages, providers, or HOST-1 internals
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

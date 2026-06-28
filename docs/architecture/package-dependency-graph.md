@@ -25,11 +25,17 @@ graph TD
   ProviderLayer["Future Provider Layer"]
   CtxFsProvider["@host/context-provider-filesystem"]
   CtxSqliteProvider["@host/context-provider-sqlite"]
+
   subgraph Application["Application Layer / HOST-3"]
   ContextService["@host/context-service"]
   ApiHost["@host/api-host"]
   AppRuntime["application-runtime\n(conceptual)"]
   end
+
+  subgraph Transport["Transport Layer / HOST-3.4"]
+  Adapter["transport-adapter\n(conceptual)"]
+  end
+
   Products["Products"]
 
   KEvents --> KTypes
@@ -78,7 +84,8 @@ graph TD
   ContextService --> CtxPersistence
   ApiHost --> ContextService
   AppRuntime --> ApiHost
-  Products --> ApiHost
+  Adapter --> ApiHost
+  Products --> Adapter
 ```
 
 ## Canonical Layering
@@ -120,6 +127,12 @@ application-runtime
 
 ↓
 
+Transport Layer
+
+transport-adapter
+
+↓
+
 Products
 ```
 
@@ -132,12 +145,16 @@ Products
 - `context-persistence` remains the top of the execution plane and the canonical entry point for future provider packages.
 - `@host/context-provider-filesystem` and `@host/context-provider-sqlite` are concrete provider-layer implementations and depend downward only.
 - Future provider packages must depend on `@host/context-persistence` and must not depend on applications.
-- Application packages must remain above the provider layer and below products.
+- Application packages must remain above the provider layer and below the Transport Layer.
+- Transport adapter packages must remain above the Application Layer and below products.
 - Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
 - Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
 - `@host/context-service` is the first implemented HOST-3 package and may depend only on `@host/context-persistence`.
 - `@host/api-host` is the canonical HOST-3 protocol dispatch boundary and may depend only on `@host/context-service`.
 - `@host/api-host` owns the frozen HOST-3.3 operation registry, request envelope, response envelope, error taxonomy, and transaction contract.
+- future transport adapter packages may depend only on `@host/api-host`
+- transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals
+- application, execution, and provider packages must not depend upward on transport adapters
 
 ## HOST-3 Conceptual Responsibilities
 
@@ -146,5 +163,9 @@ The Application Layer baseline currently contains two implemented packages and o
 - `@host/context-service` for persistence-backed orchestration, transactions, and application-layer error translation
 - `@host/api-host` for canonical API contract handling, operation dispatch, and stable API error translation
 - `application-runtime` for broader composition roots and asynchronous workflow coordination
+
+The Transport Layer baseline currently contains one conceptual package responsibility:
+
+- `transport-adapter` for protocol translation, authentication hand-off, serialization, deserialization, status mapping, request correlation, and tracing propagation
 
 The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` and `@host/api-host` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.

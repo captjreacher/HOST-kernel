@@ -14,11 +14,13 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.10 with the HOST-2 execution layer frozen and the HOST-3 application layer approved as architecture baselines.
+Current release: Kernel 1.10 with the HOST-2 execution layer frozen, the HOST-3 application layer approved, and the HOST-3.4 transport adapter architecture baseline defined.
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
 
 Application Layer status: `@host/context-service` and `@host/api-host` are implemented as the canonical service and transport-neutral host boundaries for persisted context operations.
+
+Transport Layer status: the external adapter layer is architecture-defined only. Future adapters translate external protocols into the frozen `@host/api-host` protocol `1.0.0`, but no adapter package or runtime is implemented in this repository.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -78,6 +80,7 @@ npm run verify:graph
 - [docs/architecture/context-runtime.md](docs/architecture/context-runtime.md)
 - [docs/architecture/execution-layer.md](docs/architecture/execution-layer.md)
 - [docs/architecture/application-layer.md](docs/architecture/application-layer.md)
+- [docs/architecture/ADR-007-transport-adapter-architecture-baseline.md](docs/architecture/ADR-007-transport-adapter-architecture-baseline.md)
 - [docs/architecture/ADR-004-execution-layer-architecture-baseline.md](docs/architecture/ADR-004-execution-layer-architecture-baseline.md)
 - [docs/architecture/ADR-006-application-layer-architecture-baseline.md](docs/architecture/ADR-006-application-layer-architecture-baseline.md)
 - [docs/changelog/README.md](docs/changelog/README.md)
@@ -90,3 +93,4 @@ npm run verify:graph
 - The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.
 - The execution layer is frozen as `context-runtime` -> `context-store` -> `context-persistence`, with future adapters required to sit above that boundary.
 - The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` and `@host/api-host` providing the first implemented service and host boundaries for persistence-backed context operations.
+- The Transport Layer is architecture-defined above `@host/api-host` and below products, with future adapters responsible only for protocol translation, authentication hand-off, serialization, and tracing propagation.

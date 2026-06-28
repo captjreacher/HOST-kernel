@@ -43,6 +43,18 @@ test('HOST-3.3 keeps api-host in the application layer with no transport or reve
   }
 });
 
+test('HOST-3.4 remains architecture-only and does not create transport adapter packages', () => {
+  const root = process.cwd();
+  const packagesDir = path.join(root, 'packages');
+  const workspacePackages = fs
+    .readdirSync(packagesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
+
+  const transportPackages = workspacePackages.filter((name) => name.includes('transport'));
+  assert.deepEqual(transportPackages, []);
+});
+
 test('HOST-3.3 keeps the api-host package free of transport-specific language', () => {
   const root = process.cwd();
   const files = [

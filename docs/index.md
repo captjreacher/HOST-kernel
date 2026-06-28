@@ -12,7 +12,7 @@ This index is the onboarding map for the HOST governance framework.
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](taxonomy/taxonomy-registry.md), [OBJ-002](kernel/operating-model.md), [HOST-0](architecture/system-architecture.md), [OBJ-003](services/registry-service-specification.md), [OBJ-004](context/context-domain-model.md), [OBJ-005](lifecycle/ecosystem-state-machine.md), [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md), [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) |
+| Related documents | [OBJ-001](taxonomy/taxonomy-registry.md), [OBJ-002](kernel/operating-model.md), [HOST-0](architecture/system-architecture.md), [OBJ-003](services/registry-service-specification.md), [OBJ-004](context/context-domain-model.md), [OBJ-005](lifecycle/ecosystem-state-machine.md), [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md), [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md), [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) |
 
 ## Start Here
 
@@ -54,9 +54,10 @@ This index is the onboarding map for the HOST governance framework.
 | [kernel operating principles](kernel/operating-principles.md) | Constitutional operating principles |
 | [kernel AI operating rules](kernel/ai-operating-rules.md) | Rules for human and AI sessions |
 | [kernel API architecture](architecture/kernel-api.md) | Runtime facade and endpoint constraints |
-| [application layer architecture](architecture/application-layer.md) | HOST-3 boundary for orchestration, persistence-backed APIs, and external transports |
+| [application layer architecture](architecture/application-layer.md) | HOST-3 boundary for orchestration, persistence-backed APIs, the frozen API Host, and the transport adapter boundary |
 | [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md) | Boundary between HOST-1 runtime context APIs and future persistence-backed application APIs |
 | [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) | Application Layer baseline and dependency rules for HOST-3 |
+| [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) | Transport Adapter Layer baseline and dependency rules above the frozen API Host protocol |
 
 ## Recommended Reading Order
 

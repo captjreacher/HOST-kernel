@@ -4,14 +4,14 @@
 
 This document establishes the HOST-3 application layer as the boundary above the frozen execution stack and below product implementations.
 
-The Application Layer exists to own composition and transport concerns that must not be introduced into HOST-1 or HOST-2.
+The Application Layer exists to own composition concerns and the frozen application-facing protocol boundary that must not be introduced into HOST-1 or HOST-2.
 
 It is responsible for:
 
 - orchestration of execution-layer capabilities
 - asynchronous workflows
 - persistence-backed APIs
-- external adapter boundaries
+- application-facing protocol hosting
 - application-specific policies
 - composition roots that bind approved execution and provider packages into product-facing services
 
@@ -67,6 +67,12 @@ application-runtime
 
 -> 
 
+Transport Layer
+
+future transport adapter
+
+-> 
+
 Products
 ```
 
@@ -116,6 +122,7 @@ Must not:
 Purpose:
 
 - expose a transport-neutral request and response boundary for HOST-3 capabilities
+- freeze the canonical application-facing protocol that every future adapter must implement
 - dispatch canonical protocol requests into application services
 - translate application-service failures into stable API responses
 - act as the canonical composition point for future adapter implementations without embedding adapter semantics
@@ -133,6 +140,63 @@ Implementation status:
 - depends only on `@host/context-service`
 - owns the frozen operation registry, canonical request and response envelopes, stable API error taxonomy, and transaction handle management for persisted context operations
 
+### Transport Layer (conceptual)
+
+Purpose:
+
+- translate external protocol requests into the frozen `@host/api-host` protocol
+- translate `@host/api-host` responses into protocol-specific responses
+- own serialization and deserialization at the protocol edge
+- hand off authenticated identity context into the application protocol boundary
+- propagate request correlation and tracing metadata
+
+It owns:
+
+- protocol translation
+- authentication hand-off
+- serialization
+- deserialization
+- protocol-specific status codes
+- request correlation
+- tracing propagation
+
+It must not own:
+
+- orchestration
+- persistence
+- business rules
+- provider access
+- kernel concepts
+
+Canonical adapter contract:
+
+```ts
+interface TransportAdapter<TExternalRequest, TExternalResponse> {
+  translateRequest(request: TExternalRequest): ApiRequest;
+  translateResponse(response: ApiResponse): TExternalResponse;
+}
+```
+
+The transport contract depends only on the frozen `@host/api-host` protocol.
+It does not depend on execution packages, provider packages, or HOST-1 internals.
+
+Initial transport catalogue:
+
+- REST
+- GraphQL
+- MCP
+- CLI
+- gRPC
+- Message Queue
+- WebSocket
+
+Authentication boundary:
+
+- transport authenticates
+- API Host authorizes
+- application services execute
+- execution packages remain identity-agnostic
+
 ## Dependency Rules
 
 Allowed dependency direction:
@@ -148,6 +212,8 @@ Future Provider Layer
   ->
 Application Layer
   ->
+Transport Layer
+  ->
 Products
 ```
 
@@ -159,6 +225,7 @@ Allowed:
 - Application packages may depend downward on execution abstractions and may bind approved provider packages at application composition roots.
 - `@host/context-service` is the canonical entry point for persisted context operations and depends only on `@host/context-persistence`.
 - `@host/api-host` is the canonical composition point between adapters and application services and depends only on `@host/context-service`.
+- future transport adapter packages may depend only on `@host/api-host`
 - Product code may depend on application packages and transport surfaces.
 
 Forbidden:
@@ -166,9 +233,11 @@ Forbidden:
 - no HOST-1 package may depend on HOST-2, HOST-3, providers, or products
 - no execution package may depend on applications or products
 - no provider package may depend on applications or products
+- no transport adapter package may depend on execution packages, provider packages, or HOST-1 internals
 - no application package may redefine kernel concepts, taxonomy, runtime contracts, or provider contracts
 - no application package may introduce provider awareness into public API contracts
 - no application package may introduce adapter semantics into `@host/api-host` contracts
+- no application or execution package may depend upward on transport adapter packages
 - no product package may become the architectural home of persistence-backed shared APIs that belong in HOST-3
 
 ## API Boundary
@@ -213,12 +282,30 @@ runtime create and validate only
 
 This preserves the ADR-005 rule that persistence-backed APIs do not extend the HOST-1 runtime adapter contract.
 
+### Error Mapping Boundary
+
+Error mapping happens in two phases:
+
+- `@host/api-host` translates service and provider-originated failures into the stable HOST-3.3 API taxonomy
+- the transport layer translates stable API errors into protocol-specific error representations
+
+Examples of future transport mapping targets:
+
+- `api.not_found` -> HTTP 404
+- `api.not_found` -> CLI exit classification
+- `api.not_found` -> MCP error response
+- `api.not_found` -> GraphQL error payload
+
+These mappings are architectural requirements only in HOST-3.4.
+No concrete mapping tables or runtimes are introduced in this sprint.
+
 ## Baseline Declaration
 
 The HOST-3 application layer is approved as an architecture baseline.
 
 The `@host/api-host` contract is frozen at protocol version `1.0.0`.
 Future work may add adapters, but adapter work must implement the HOST-3.3 contract rather than redefining it.
+The Transport Layer is approved as a conceptual architecture boundary only.
 
 This baseline defines boundaries only.
 It does not approve package creation, business logic, provider selection, or product functionality.

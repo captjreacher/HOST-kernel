@@ -4,6 +4,9 @@ Canonical API contract host for HOST application services.
 
 This package freezes the HOST-3.3 protocol boundary that sits above `@host/context-service` and below any future adapter implementation.
 
+The HOST-3.4 transport architecture baseline places the future adapter layer above this package.
+Those adapters translate external protocol semantics into this canonical contract and must not alter protocol version `1.0.0`.
+
 ## Responsibilities
 
 - expose the canonical versioned request envelope
@@ -18,6 +21,7 @@ This package freezes the HOST-3.3 protocol boundary that sits above `@host/conte
 - no provider lifecycle or provider-specific types
 - no product-specific operations
 - no HOST-1 or HOST-2 contract changes
+- no authentication execution or serialization policy ownership
 
 ## Frozen Contract
 
@@ -93,3 +97,7 @@ Authoritative operation registry:
 ## Dependency Direction
 
 `@host/api-host` -> `@host/context-service` -> `@host/context-persistence` -> `@host/context-store` -> `@host/context-runtime` -> HOST-1 kernel packages
+
+Future adapter direction:
+
+`products` -> `adapter` -> `@host/api-host`

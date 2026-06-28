@@ -18,12 +18,12 @@ ADR-005 then clarified that persistence-backed APIs must not be introduced throu
 - HOST-2 persistence composition is asynchronous by contract
 - moving persistence-backed transport concerns into HOST-1 would weaken both the HOST-1 freeze and the ADR-004 execution boundary
 
-What remained undefined was the architectural home for:
+What remained undefined at HOST-3.0 was the architectural home for:
 
 - orchestration across execution capabilities
 - asynchronous workflows
 - persistence-backed APIs
-- external transports
+- the application-facing API host boundary
 - application-specific policies
 
 HOST-3 establishes that boundary before any application functionality is implemented.
@@ -37,7 +37,7 @@ Its role is to own:
 - orchestration
 - asynchronous workflows
 - persistence-backed APIs
-- external transports
+- the application-facing API host boundary
 - composition of execution-layer capabilities
 - application-specific policies
 
@@ -114,9 +114,9 @@ This ADR does not create those packages.
 
 ### `api-host` (conceptual)
 
-- external transports
 - persistence-backed API hosting
-- translation between transport semantics and application services
+- the frozen application-facing protocol boundary
+- translation between application services and future adapter implementations
 
 ## Dependency Rules
 
@@ -178,6 +178,8 @@ Constraints introduced by this decision:
 - HOST-3.0 remains architecture only
 
 ## Out Of Scope
+
+HOST-3.4 later establishes the Transport Layer above `api-host` as a separate architecture concern through ADR-007.
 
 This ADR does not approve:
 
