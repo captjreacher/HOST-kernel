@@ -17,7 +17,6 @@
     { "path": "../kernel-objectives" },
     { "path": "../kernel-documents" },
     { "path": "../kernel-repositories" },
-    { "path": "../kernel-registry" },
-    { "path": "../kernel-test-utils" }
+    { "path": "../kernel-registry" }
   ]
 }

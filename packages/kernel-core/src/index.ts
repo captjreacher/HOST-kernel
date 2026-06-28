@@ -7,4 +7,5 @@ export * from '@host/kernel-objectives';
 export * from '@host/kernel-documents';
 export * from '@host/kernel-repositories';
 export * from '@host/kernel-registry';
-export * from '@host/kernel-test-utils';
+export * from './contracts.js';
+export * from './kernel.js';

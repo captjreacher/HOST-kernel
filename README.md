@@ -6,7 +6,7 @@
 | --- | --- |
 | Originating Objective | OBJ-006 |
 | Status | Governance Baseline v1.0 |
-| Version | 1.5 |
+| Version | 1.9 |
 | Owner | HOST |
 | Last reviewed | 2026-06-28 |
 | Constitution | [OBJ-000](docs/constitution/ecosystem-constitution.md) |
@@ -14,7 +14,7 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.5 Registry Service.
+Current release: Kernel 1.9 Kernel Bootstrap.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -41,7 +41,6 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/kernel-documents` for document registry contracts
 - `packages/kernel-repositories` for repository registry contracts
 - `packages/kernel-events` for canonical runtime events
-- `packages/kernel-test-utils` for shared testing helpers
 - `packages/kernel-core` for the composed kernel surface
 
 The canonical identifier model is documented in [docs/architecture/identifier-service.md](docs/architecture/identifier-service.md).
@@ -60,6 +59,7 @@ npm run verify:graph
 - [docs/objectives/HOST-1.1-kernel-foundation.md](docs/objectives/HOST-1.1-kernel-foundation.md)
 - [docs/objectives/HOST-1.4-validation-engine.md](docs/objectives/HOST-1.4-validation-engine.md)
 - [docs/objectives/HOST-1.5-registry-service.md](docs/objectives/HOST-1.5-registry-service.md)
+- [docs/objectives/HOST-1.9-kernel-bootstrap.md](docs/objectives/HOST-1.9-kernel-bootstrap.md)
 - [docs/templates/implementation-task-template.md](docs/templates/implementation-task-template.md)
 - [docs/architecture/package-dependency-graph.md](docs/architecture/package-dependency-graph.md)
 - [docs/changelog/README.md](docs/changelog/README.md)
@@ -68,4 +68,4 @@ npm run verify:graph
 
 - The existing registry service remains available through the new `kernel-registry` package.
 - Root `src/` files now act as compatibility shims over the workspace packages.
-- The kernel foundation stays implementation-light outside the registry behavior already present in the repo.
+- The kernel foundation now includes a composed bootstrap runtime in `kernel-core`.

@@ -11,7 +11,6 @@ graph TD
   KDocuments["@host/kernel-documents"]
   KRepositories["@host/kernel-repositories"]
   KRegistry["@host/kernel-registry"]
-  KTestUtils["@host/kernel-test-utils"]
   KCore["@host/kernel-core"]
 
   KEvents --> KTypes
@@ -30,8 +29,6 @@ graph TD
   KRepositories --> KTypes
   KRegistry --> KTypes
   KRegistry --> KValidation
-  KTestUtils --> KTypes
-  KTestUtils --> KRegistry
   KCore --> KTypes
   KCore --> KEvents
   KCore --> KIdentifiers
@@ -41,7 +38,6 @@ graph TD
   KCore --> KDocuments
   KCore --> KRepositories
   KCore --> KRegistry
-  KCore --> KTestUtils
 ```
 
-The graph is intentionally acyclic. Shared types sit at the bottom, and the core package composes upward without feeding back into lower layers.
+The graph is intentionally acyclic. Shared types sit at the bottom, and the core package composes upward without feeding back into lower layers. The runtime composition package no longer depends on test utilities.

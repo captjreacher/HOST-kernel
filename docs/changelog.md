@@ -12,6 +12,17 @@
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
 | Related documents | [README](../README.md), [docs/index.md](index.md), [docs/constitution/ecosystem-constitution.md](constitution/ecosystem-constitution.md), [docs/architecture/system-architecture.md](architecture/system-architecture.md) |
 
+## HOST-1.9 - Kernel Bootstrap
+
+This entry records the HOST-1.9 composed kernel bootstrap implementation.
+
+- Kernel runtime contracts now expose the composed control-plane surface
+- `createKernel()` now wires the identifier, taxonomy, validation, registry, objective, document, and repository accessors through a shared bootstrap runtime
+- Constitutional artefacts are seeded and discoverable through the Document Registry during startup
+- Deterministic health checks now report composition and constitutional seed status
+- Bootstrap startup validation rejects invalid configuration before runtime exposure
+- Kernel bootstrap documentation and changelog scaffolding were added for HOST-1.x implementation work
+
 ## HOST-1.3 - Taxonomy Resolver
 
 This entry records the HOST-1.3 canonical taxonomy resolver implementation.
