@@ -15,7 +15,10 @@
     "dist"
   ],
   "dependencies": {
-    "@host/kernel-types": "file:../kernel-types"
+    "@host/kernel-identifiers": "file:../kernel-identifiers",
+    "@host/kernel-registry": "file:../kernel-registry",
+    "@host/kernel-types": "file:../kernel-types",
+    "@host/kernel-validation": "file:../kernel-validation"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json"

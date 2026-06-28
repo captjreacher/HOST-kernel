@@ -1,5 +1,6 @@
 export type RegistryStatus = 'active' | 'inactive' | 'deprecated';
 export type LifecycleState = 'proposed' | 'registered' | 'live' | 'suspended' | 'retired';
+export type ObjectiveLifecycleState = 'draft' | 'proposed' | 'approved' | 'planned' | 'active' | 'implemented' | 'validated' | 'closed' | 'archived';
 export type ValidationSeverity = 'info' | 'warning' | 'error';
 export type ValidationOutcome = 'valid' | 'invalid';
 
@@ -123,8 +124,9 @@ export interface RegistryRecord {
 
 export interface Objective extends RegistryRecord {
   objective_id: string;
-  lifecycle_state: LifecycleState;
+  lifecycle_state: ObjectiveLifecycleState;
   dependencies: string[];
+  references?: readonly ValidationReference[];
 }
 
 export interface Repository extends RegistryRecord {

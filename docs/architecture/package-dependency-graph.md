@@ -22,6 +22,9 @@ graph TD
   KValidation --> KIdentifiers
   KValidation --> KTaxonomy
   KObjectives --> KTypes
+  KObjectives --> KIdentifiers
+  KObjectives --> KRegistry
+  KObjectives --> KValidation
   KDocuments --> KTypes
   KRepositories --> KTypes
   KRegistry --> KTypes

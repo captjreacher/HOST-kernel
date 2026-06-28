@@ -40,6 +40,17 @@ This entry records the HOST-1.5 canonical registry service implementation.
 - Registry lookup now acts as the live validation source for traceability and reference integrity checks
 - Registry service documentation and changelog scaffolding were added for HOST-1.x implementation work
 
+## HOST-1.6 - Objective Registry
+
+This entry records the HOST-1.6 canonical objective registry implementation.
+
+- Objective domain contracts now include lifecycle state and traceability links for governed Objective records
+- The Objective Registry now allocates canonical `OBJ-###` identifiers through the Identifier Service
+- Objective creation, retrieval, metadata update, and lifecycle transitions now run through validation-backed registry mutation
+- Duplicate Objective creation is rejected deterministically through registry-backed uniqueness checks
+- Live traceability links to documents, ADRs, repositories, capabilities, tasks, artifacts, workflows, and events are validated where records exist
+- Objective registry documentation and changelog scaffolding were added for HOST-1.x implementation work
+
 ## HOST-1.2 - Identifier Service
 
 This entry records the HOST-1.2 canonical identifier service implementation.
