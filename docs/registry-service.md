@@ -1,6 +1,6 @@
 # Registry Service
 
-Current release: Kernel 0.1 Registry Foundation.
+Current release: Kernel 1.5 Registry Service.
 
 Canonical specification: [docs/services/registry-service-specification.md](services/registry-service-specification.md).
 
@@ -34,17 +34,15 @@ See the canonical specification for the full interface and behaviour contract.
 
 ## Responsibilities
 
-- Register products
-- Update product metadata
-- Look up products by key
-- List products
-- Register repositories linked to products when applicable
-- Register platform-owned repositories without an owning product reference
-- Register capabilities linked to products when applicable
-- Register platform-owned capabilities without an owning product reference
-- Register event contracts
-- Validate duplicate keys
-- Validate dependency references for capabilities
+- Register governed records
+- Update governed records
+- Look up records by id or family
+- List and find records
+- Reserve identifiers
+- Look up reserved identifiers
+- Validate duplicate keys and identifiers
+- Validate lifecycle and status fields
+- Validate traceability references where available
 
 ## Non-responsibilities
 
@@ -58,8 +56,9 @@ See the canonical specification for the full interface and behaviour contract.
 
 ## Data Model Summary
 
-The registry supports four record types:
+The registry supports governed records and the legacy product-oriented fixtures that still ship with the workspace:
 
+- Governed records
 - Products
 - Repositories
 - Capabilities
@@ -88,6 +87,7 @@ Repository records also include:
 - git_url
 - default_branch
 - owning_product
+- owning_objective when the canonical registry profile is used
 
 Capability records also include:
 
@@ -111,15 +111,16 @@ The service layer is implemented as a deterministic in-memory boundary that can 
 
 Available operations:
 
-- `registerProduct`
-- `updateProduct`
-- `getProductByKey`
-- `listProducts`
-- `registerRepository`
-- `registerCapability`
-- `registerEventContract`
-- `validateDuplicateKey`
-- `validateDependencyReferences`
+- `register`
+- `update`
+- `lookup`
+- `exists`
+- `find`
+- `list`
+- `reserveIdentifier`
+- `lookupIdentifier`
+- `listIdentifiers`
+- Legacy compatibility helpers for products, repositories, capabilities, and event contracts
 
 Derived capability state is intentional: when a capability is registered against a product-owned capability record, the service also appends that capability key to the owning product's `registered_capabilities` list. Duplicate capability registration is rejected before that list can change, so the product state stays deduplicated.
 
@@ -137,7 +138,7 @@ It provides a small, repeatable set of platform records for:
 
 It is not production seed data and does not imply production readiness.
 
-See [docs/changelog.md](changelog.md) for the Kernel 0.1 Registry Foundation baseline note.
+See [docs/changelog.md](changelog.md) for the HOST-1.5 Registry Service baseline note.
 
 See the canonical governance registry in [docs/taxonomy/taxonomy-registry.md](taxonomy/taxonomy-registry.md) for the ecosystem naming and ownership model that the service layer must respect.
 

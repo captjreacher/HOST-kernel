@@ -1,1 +1,1 @@
-export {};
+export * from '@host/kernel-events';

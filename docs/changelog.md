@@ -12,6 +12,54 @@
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
 | Related documents | [README](../README.md), [docs/index.md](index.md), [docs/constitution/ecosystem-constitution.md](constitution/ecosystem-constitution.md), [docs/architecture/system-architecture.md](architecture/system-architecture.md) |
 
+## HOST-1.3 - Taxonomy Resolver
+
+This entry records the HOST-1.3 canonical taxonomy resolver implementation.
+
+- Canonical object type, prefix, lifecycle, event, and relationship resolution added for the HOST control plane
+- Validation and discovery now flow through a shared taxonomy resolver surface
+- Identifier Service now consumes resolver lookups instead of carrying its own taxonomy rules
+- Package-name-based imports remain in place across the kernel workspace
+- Taxonomy resolver documentation and changelog scaffolding were added for HOST-1.x work
+
+## HOST-1.4 - Validation Engine
+
+This entry records the HOST-1.4 canonical validation engine implementation.
+
+- Runtime validation now centralizes identifier, taxonomy, lifecycle, ownership, document reference, registry record, and traceability checks
+- Validation results now carry structured counts, deterministic issue codes, and validation context
+- Registry-backed integrity checks use lookup abstractions rather than concrete persistence or external services
+- Validation engine documentation and changelog scaffolding were added for HOST-1.x implementation work
+
+## HOST-1.5 - Registry Service
+
+This entry records the HOST-1.5 canonical registry service implementation.
+
+- Runtime registry mutation, lookup, discovery, and identifier reservation are now centralized behind the core registry service
+- Validation-backed register and update operations now reject malformed records, duplicate identifiers, and broken references deterministically
+- Registry lookup now acts as the live validation source for traceability and reference integrity checks
+- Registry service documentation and changelog scaffolding were added for HOST-1.x implementation work
+
+## HOST-1.2 - Identifier Service
+
+This entry records the HOST-1.2 canonical identifier service implementation.
+
+- Canonical identifier generation, parsing, and validation added for objectives, ADRs, capabilities, entities, workflows, events, artifacts, and tasks
+- Taxonomy-driven type resolution added to the workspace model
+- Registry-backed uniqueness reservation is now supported through the shared registry abstraction
+- Package consumers now import from package names rather than source paths
+- Identifier service documentation and changelog scaffolding were added for HOST-1.x implementation work
+
+## HOST-1.1 - Kernel Foundation Workspace
+
+This entry records the HOST-1.1 monorepo foundation.
+
+- Workspace package structure created
+- Shared type system extracted into `kernel-types`
+- Registry runtime moved into `kernel-registry`
+- Build, test, and dependency graph verification now run at the workspace level
+- Documentation templates and changelog structure were added for HOST-1.x implementation tasks
+
 ## HOST-0 - Ecosystem System Architecture
 
 This entry establishes the architectural bridge between governance and implementation.

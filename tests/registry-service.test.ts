@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RegistryError, RegistryService } from '../src/services/registry/index.js';
+import { RegistryError, RegistryService } from '@host/kernel-registry';
 import { registrySeed, seedRegistry } from './fixtures/registry-seed.js';
+import type { RegistryEntry } from '@host/kernel-registry';
 
 const createService = (): RegistryService => new RegistryService();
 
@@ -18,6 +19,21 @@ const registerProduct = (service: RegistryService, overrides: Partial<Parameters
     registered_capabilities: [],
     ...overrides,
   });
+
+const createRegistryEntry = (overrides: Partial<RegistryEntry> = {}): RegistryEntry => ({
+  kind: 'objective',
+  id: 'objective-001',
+  key: 'objective-001',
+  display_name: 'Objective 001',
+  description: 'Canonical objective record',
+  status: 'active',
+  version: '1.0.0',
+  owner: 'host',
+  created_at: '2026-06-28T00:00:00.000Z',
+  updated_at: '2026-06-28T00:00:00.000Z',
+  lifecycle_state: 'proposed',
+  ...overrides,
+});
 
 test('product registration', () => {
   const service = createService();
@@ -254,4 +270,156 @@ test('seed data can be registered without violating constraints', () => {
   });
 
   assert.equal(platformCapability.owning_product, null);
+});
+
+test('successful registration', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+
+  assert.equal(record.kind, 'objective');
+  assert.equal(service.exists(record.id), true);
+});
+
+test('duplicate registration rejection', () => {
+  const service = createService();
+  const record = createRegistryEntry();
+
+  service.register(record);
+
+  assert.throws(() => service.register({ ...record, id: 'objective-002' }), RegistryError);
+});
+
+test('successful update', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+  const updated = service.update(record.id, { description: 'Updated objective description' });
+
+  assert.equal(updated.description, 'Updated objective description');
+  assert.equal(service.lookup(record.id)?.description, 'Updated objective description');
+});
+
+test('update of missing record', () => {
+  const service = createService();
+
+  assert.throws(() => service.update('missing-record', { description: 'missing' }), RegistryError);
+});
+
+test('lookup by id', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+  const lookup = service.lookup(record.id);
+
+  assert.equal(lookup && 'kind' in lookup ? lookup.kind : undefined, 'objective');
+});
+
+test('exists by id', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+
+  assert.equal(service.exists(record.id), true);
+});
+
+test('list records', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+
+  const records = service.list() as RegistryEntry[];
+  assert.ok(records.some((item) => item.id === record.id));
+});
+
+test('find records by type status owner', () => {
+  const service = createService();
+  const record = service.register({
+    ...createRegistryEntry({
+      kind: 'repository',
+      id: 'repository-001',
+      key: 'repository-001',
+      display_name: 'Repository 001',
+      description: 'Canonical repository record',
+      owner: 'platform-team',
+      repository_url: 'https://example.com/host-kernel.git',
+      default_branch: 'main',
+      owning_product: 'platform-core',
+      lifecycle_state: undefined,
+    }),
+  });
+
+  const found = service.find({ kind: 'repository', status: 'active', owner: 'platform-team' });
+  assert.ok(found.some((item) => item.id === record.id));
+});
+
+test('identifier reservation', () => {
+  const service = createService();
+  const reserved = service.reserveIdentifier({
+    type: 'objective',
+    prefix: 'OBJ',
+    sequence: 1,
+    value: 'OBJ-001',
+  });
+
+  assert.equal(reserved, true);
+  assert.ok(service.lookupIdentifier('OBJ-001'));
+});
+
+test('duplicate identifier reservation', () => {
+  const service = createService();
+  service.reserveIdentifier({
+    type: 'objective',
+    prefix: 'OBJ',
+    sequence: 1,
+    value: 'OBJ-001',
+  });
+
+  assert.equal(
+    service.reserveIdentifier({
+      type: 'objective',
+      prefix: 'OBJ',
+      sequence: 1,
+      value: 'OBJ-001',
+    }),
+    false,
+  );
+});
+
+test('validation-backed rejection of invalid records', () => {
+  const service = createService();
+
+  assert.throws(
+    () =>
+      service.register({
+        ...createRegistryEntry({
+          id: 'objective-002',
+          key: 'objective-002',
+          status: 'broken' as never,
+        }),
+      }),
+    RegistryError,
+  );
+});
+
+test('validation-backed rejection of broken references', () => {
+  const service = createService();
+
+  assert.throws(
+    () =>
+      service.register({
+        ...createRegistryEntry({
+          kind: 'document',
+          id: 'document-001',
+          key: 'document-001',
+          document_type: 'objective',
+          references: [{ kind: 'objective', id: 'OBJ-404', relation: 'references' }],
+        }),
+      }),
+    RegistryError,
+  );
+});
+
+test('ValidationLookup adapter behaviour', () => {
+  const service = createService();
+  const record = service.register(createRegistryEntry());
+
+  const lookup = service.lookup('objective', record.id);
+  assert.equal(lookup?.id, record.id);
+  assert.equal(service.lookup('registry-record', record.id)?.id, record.id);
 });

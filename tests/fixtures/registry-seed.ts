@@ -1,5 +1,10 @@
-import { type CapabilityRegistrationInput, type EventRegistrationInput, type ProductRegistrationInput, type RepositoryRegistrationInput } from '../../src/contracts/registry.js';
-import { RegistryService } from '../../src/services/registry/index.js';
+import {
+  type CapabilityRegistrationInput,
+  type EventRegistrationInput,
+  type ProductRegistrationInput,
+  type RepositoryRegistrationInput,
+} from '@host/kernel-registry';
+import { RegistryService } from '@host/kernel-registry';
 
 export const registrySeed = {
   products: [

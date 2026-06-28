@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    { "path": "../kernel-types" },
+    { "path": "../kernel-events" },
+    { "path": "../kernel-identifiers" },
+    { "path": "../kernel-taxonomy" },
+    { "path": "../kernel-validation" },
+    { "path": "../kernel-objectives" },
+    { "path": "../kernel-documents" },
+    { "path": "../kernel-repositories" },
+    { "path": "../kernel-registry" },
+    { "path": "../kernel-test-utils" }
+  ]
+}

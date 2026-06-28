@@ -1,0 +1,25 @@
+{
+  "name": "@host/kernel-validation",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@host/kernel-identifiers": "file:../kernel-identifiers",
+    "@host/kernel-taxonomy": "file:../kernel-taxonomy",
+    "@host/kernel-types": "file:../kernel-types"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

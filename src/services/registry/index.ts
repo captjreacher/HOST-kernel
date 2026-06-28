@@ -1,1 +1,1 @@
-export * from './registry-service.js';
+export * from '@host/kernel-registry';

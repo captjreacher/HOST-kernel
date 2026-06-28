@@ -1,18 +1,16 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "outDir": "dist",
-    "rootDir": ".",
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["dist", "tests", "supabase"]
+  "files": [],
+  "references": [
+    { "path": "./packages/kernel-types" },
+    { "path": "./packages/kernel-events" },
+    { "path": "./packages/kernel-identifiers" },
+    { "path": "./packages/kernel-taxonomy" },
+    { "path": "./packages/kernel-validation" },
+    { "path": "./packages/kernel-objectives" },
+    { "path": "./packages/kernel-documents" },
+    { "path": "./packages/kernel-repositories" },
+    { "path": "./packages/kernel-registry" },
+    { "path": "./packages/kernel-test-utils" },
+    { "path": "./packages/kernel-core" }
+  ]
 }

@@ -4,9 +4,13 @@
   "version": "0.1.0",
   "description": "HOST-kernel platform runtime for the MGRNZ ecosystem.",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "tsx --test tests/registry-service.test.ts"
+    "build": "tsc -b tsconfig.json",
+    "test": "tsx --test tests/*.test.ts",
+    "verify:graph": "node scripts/verify-package-graph.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.13",

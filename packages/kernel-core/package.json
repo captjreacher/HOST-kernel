@@ -1,0 +1,32 @@
+{
+  "name": "@host/kernel-core",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@host/kernel-documents": "file:../kernel-documents",
+    "@host/kernel-events": "file:../kernel-events",
+    "@host/kernel-identifiers": "file:../kernel-identifiers",
+    "@host/kernel-objectives": "file:../kernel-objectives",
+    "@host/kernel-repositories": "file:../kernel-repositories",
+    "@host/kernel-registry": "file:../kernel-registry",
+    "@host/kernel-taxonomy": "file:../kernel-taxonomy",
+    "@host/kernel-test-utils": "file:../kernel-test-utils",
+    "@host/kernel-types": "file:../kernel-types",
+    "@host/kernel-validation": "file:../kernel-validation"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}
