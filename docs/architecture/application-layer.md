@@ -179,6 +179,7 @@ interface TransportAdapter<TExternalRequest, TExternalResponse> {
 
 The transport contract depends only on the frozen `@host/api-host` protocol.
 It does not depend on execution packages, provider packages, or HOST-1 internals.
+HOST-3.5 implements this contract boundary concretely as `@host/transport-adapter`.
 
 Initial transport catalogue:
 
@@ -226,6 +227,7 @@ Allowed:
 - `@host/context-service` is the canonical entry point for persisted context operations and depends only on `@host/context-persistence`.
 - `@host/api-host` is the canonical composition point between adapters and application services and depends only on `@host/context-service`.
 - future transport adapter packages may depend only on `@host/api-host`
+- `@host/transport-adapter` is the canonical contract package for the Transport Layer and may depend only on `@host/api-host`
 - Product code may depend on application packages and transport surfaces.
 
 Forbidden:

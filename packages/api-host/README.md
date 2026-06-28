@@ -6,6 +6,7 @@ This package freezes the HOST-3.3 protocol boundary that sits above `@host/conte
 
 The HOST-3.4 transport architecture baseline places the future adapter layer above this package.
 Those adapters translate external protocol semantics into this canonical contract and must not alter protocol version `1.0.0`.
+HOST-3.5 defines `@host/transport-adapter` as the sole contract package for that layer.
 
 ## Responsibilities
 

@@ -68,6 +68,16 @@ This entry records the HOST-3.4 architecture baseline for future transport adapt
 - the initial transport catalogue is now recorded as REST, GraphQL, MCP, CLI, gRPC, Message Queue, and WebSocket
 - `ADR-007` now freezes the dependency rule `transport-adapter` -> `@host/api-host` while forbidding transport dependencies on execution packages, providers, or HOST-1 internals
 
+## HOST-3.5 - Transport Adapter Contract Package
+
+This entry records the first concrete package for the Transport Layer.
+
+- `@host/transport-adapter` is now implemented as the sole canonical Transport Layer contract package
+- the package now freezes Transport Adapter Contract v`1.0.0` while targeting the frozen API Host protocol v`1.0.0`
+- transport-neutral contracts now include `TransportAdapter`, request and response envelopes, authentication context, transport metadata, and tracing metadata
+- deterministic helper functions now provide canonical default authentication and tracing metadata without introducing any runtime adapter behavior
+- dependency rules now enforce `@host/transport-adapter` -> `@host/api-host` only
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

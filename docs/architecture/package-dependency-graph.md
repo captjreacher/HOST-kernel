@@ -33,7 +33,7 @@ graph TD
   end
 
   subgraph Transport["Transport Layer / HOST-3.4"]
-  Adapter["transport-adapter\n(conceptual)"]
+  Adapter["@host/transport-adapter"]
   end
 
   Products["Products"]
@@ -153,6 +153,7 @@ Products
 - `@host/api-host` is the canonical HOST-3 protocol dispatch boundary and may depend only on `@host/context-service`.
 - `@host/api-host` owns the frozen HOST-3.3 operation registry, request envelope, response envelope, error taxonomy, and transaction contract.
 - future transport adapter packages may depend only on `@host/api-host`
+- `@host/transport-adapter` is the sole canonical Transport Layer contract package
 - transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals
 - application, execution, and provider packages must not depend upward on transport adapters
 
@@ -164,8 +165,8 @@ The Application Layer baseline currently contains two implemented packages and o
 - `@host/api-host` for canonical API contract handling, operation dispatch, and stable API error translation
 - `application-runtime` for broader composition roots and asynchronous workflow coordination
 
-The Transport Layer baseline currently contains one conceptual package responsibility:
+The Transport Layer baseline currently contains one implemented contract package responsibility:
 
-- `transport-adapter` for protocol translation, authentication hand-off, serialization, deserialization, status mapping, request correlation, and tracing propagation
+- `@host/transport-adapter` for canonical adapter contracts, authentication context contracts, correlation and tracing metadata, and deterministic metadata defaults
 
 The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` and `@host/api-host` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.

@@ -31,6 +31,7 @@ const executionPackages = {
 const providerPackagePrefixes = ['@host/context-provider-'];
 const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
 const applicationPackages = new Set(['@host/context-service', '@host/api-host']);
+const transportPackages = new Set(['@host/transport-adapter']);
 
 const layerRank = {
   knowledge: 0,
@@ -39,6 +40,7 @@ const layerRank = {
   executionPersistence: 3,
   provider: 4,
   application: 5,
+  transport: 6,
 };
 
 const allowedDependencies = new Map([
@@ -52,6 +54,9 @@ const allowedProviderDependencies = new Set([
 const allowedApplicationDependencies = new Map([
   ['@host/context-service', new Set(['@host/context-persistence'])],
   ['@host/api-host', new Set(['@host/context-service'])],
+]);
+const allowedTransportDependencies = new Map([
+  ['@host/transport-adapter', new Set(['@host/api-host'])],
 ]);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
@@ -72,6 +77,9 @@ const layerFor = (packageName) => {
   if (applicationPackages.has(packageName) || startsWithAny(packageName, applicationPackagePrefixes)) {
     return 'application';
   }
+  if (transportPackages.has(packageName)) {
+    return 'transport';
+  }
 
   return 'knowledge';
 };
@@ -91,6 +99,15 @@ for (const [name, dependencies] of edges.entries()) {
     for (const dependency of dependencies) {
       if (!allowedApplication.has(dependency)) {
         throw new Error(`${name} may only depend on ${[...allowedApplication].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+  }
+
+  const allowedTransport = allowedTransportDependencies.get(name);
+  if (allowedTransport) {
+    for (const dependency of dependencies) {
+      if (!allowedTransport.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedTransport].sort().join(', ')} but also depends on ${dependency}.`);
       }
     }
   }
@@ -138,6 +155,13 @@ for (const [name, dependencies] of edges.entries()) {
     const dependentLayer = layerFor(name);
     if (dependentLayer !== 'provider' && dependentLayer !== 'application') {
       throw new Error(`${name} must not depend on ${executionPackages.persistence}; only providers or applications may sit above the persistence boundary.`);
+    }
+  }
+
+  if (name !== '@host/api-host' && dependencies.includes('@host/api-host')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'transport') {
+      throw new Error(`${name} must not depend on @host/api-host; only transport packages may sit above the API Host boundary.`);
     }
   }
 }

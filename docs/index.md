@@ -55,6 +55,7 @@ This index is the onboarding map for the HOST governance framework.
 | [kernel AI operating rules](kernel/ai-operating-rules.md) | Rules for human and AI sessions |
 | [kernel API architecture](architecture/kernel-api.md) | Runtime facade and endpoint constraints |
 | [application layer architecture](architecture/application-layer.md) | HOST-3 boundary for orchestration, persistence-backed APIs, the frozen API Host, and the transport adapter boundary |
+| [transport layer architecture](architecture/transport-layer.md) | Canonical Transport Layer contract package and dependency rules above the frozen API Host protocol |
 | [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md) | Boundary between HOST-1 runtime context APIs and future persistence-backed application APIs |
 | [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) | Application Layer baseline and dependency rules for HOST-3 |
 | [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) | Transport Adapter Layer baseline and dependency rules above the frozen API Host protocol |
