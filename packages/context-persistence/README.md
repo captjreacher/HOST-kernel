@@ -10,6 +10,7 @@ This package defines deterministic provider contracts for:
 - transaction lifecycle
 - health checks
 - capability discovery
+- store composition through provider injection
 
 It includes a single in-memory reference provider that wraps the in-memory Context Store for contract validation only.
 
@@ -27,3 +28,18 @@ Frozen package responsibilities:
 Dependency direction remains one-way:
 
 `@host/context-persistence` -> `@host/context-store` -> `@host/context-runtime` -> HOST-1 kernel packages
+
+Canonical composition:
+
+- `createContextStoreFromProvider({ provider })`
+
+This composes a `ContextStore` over any connected persistence provider while keeping `@host/context-store` itself persistence-agnostic.
+
+Example:
+
+```ts
+const provider = createSQLitePersistenceProvider({ file_path, runtime });
+await provider.connect();
+
+const store = createContextStoreFromProvider({ provider });
+```

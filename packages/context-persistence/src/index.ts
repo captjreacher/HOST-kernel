@@ -1,4 +1,5 @@
 export * from './contracts.js';
+export * from './composition.js';
 export * from './provider.js';
 export { ContextStoreError, createInMemoryContextStore, beginTransaction as beginContextStoreTransaction } from '@host/context-store';
 export type {
