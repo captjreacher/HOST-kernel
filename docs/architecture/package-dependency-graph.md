@@ -26,6 +26,7 @@ graph TD
   KObjectives --> KRegistry
   KObjectives --> KValidation
   KDocuments --> KTypes
+  KDocuments --> KRegistry
   KRepositories --> KTypes
   KRegistry --> KTypes
   KRegistry --> KValidation

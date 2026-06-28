@@ -1,8 +1,2 @@
-import type { Document } from '@host/kernel-types';
-
-export interface DocumentRegistry {
-  register(document: Document): Document;
-  update(document: Document): Document;
-  lookup(id: string): Document | undefined;
-  list(): Document[];
-}
+export * from './contracts.js';
+export * from './document-registry.js';

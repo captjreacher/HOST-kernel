@@ -15,6 +15,7 @@
     "dist"
   ],
   "dependencies": {
+    "@host/kernel-registry": "file:../kernel-registry",
     "@host/kernel-types": "file:../kernel-types"
   },
   "scripts": {

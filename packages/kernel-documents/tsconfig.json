@@ -9,6 +9,7 @@
     "src/**/*.ts"
   ],
   "references": [
-    { "path": "../kernel-types" }
+    { "path": "../kernel-types" },
+    { "path": "../kernel-registry" }
   ]
 }

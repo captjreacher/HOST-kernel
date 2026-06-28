@@ -51,6 +51,16 @@ This entry records the HOST-1.6 canonical objective registry implementation.
 - Live traceability links to documents, ADRs, repositories, capabilities, tasks, artifacts, workflows, and events are validated where records exist
 - Objective registry documentation and changelog scaffolding were added for HOST-1.x implementation work
 
+## HOST-1.7 - Document Registry
+
+This entry records the HOST-1.7 canonical document registry implementation.
+
+- Document domain contracts now model metadata-only document records for constitutional and architectural artefacts
+- The Document Registry now seeds and discovers the canonical HOST governance artefacts at runtime
+- Document registration, retrieval, metadata update, and related-document traceability now run through validation-backed registry mutation
+- Duplicate document records, invalid document status, missing version, and broken lineage or related-document links are rejected deterministically
+- Document registry documentation and changelog scaffolding were added for HOST-1.x implementation work
+
 ## HOST-1.2 - Identifier Service
 
 This entry records the HOST-1.2 canonical identifier service implementation.
