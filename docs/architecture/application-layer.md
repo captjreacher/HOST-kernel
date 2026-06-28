@@ -62,17 +62,17 @@ graph
 Application Layer
 
 @host/context-service
+@host/api-host
 application-runtime
-api-host
 
 -> 
 
 Products
 ```
 
-The Application Layer now contains one implemented package boundary, `@host/context-service`.
+The Application Layer now contains two implemented package boundaries, `@host/context-service` and `@host/api-host`.
 
-`application-runtime` and `api-host` remain conceptual.
+`application-runtime` remains conceptual.
 
 ## Responsibility Boundaries
 
@@ -111,19 +111,27 @@ Must not:
 - push provider semantics upward into application contracts
 - absorb product-specific feature logic
 
-### `api-host` (conceptual)
+### `@host/api-host`
 
 Purpose:
 
-- expose external transports for HOST-3 capabilities
-- host persistence-backed API endpoints
-- translate transport concerns into application-service calls
+- expose a transport-neutral request and response boundary for HOST-3 capabilities
+- dispatch transport-independent requests into application services
+- translate application-service failures into stable API responses
+- act as the canonical composition point for future REST, GraphQL, CLI, MCP, gRPC, and message-bus adapters
 
 Must not:
 
-- duplicate kernel validation or execution-layer persistence logic
-- expose provider lifecycle, session, or transaction implementation details directly
+- start an HTTP listener
+- import transport frameworks
+- expose provider lifecycle or provider-specific details
 - replace `kernel-api` as the HOST-1 synchronous runtime facade
+
+Implementation status:
+
+- implemented in HOST-3.2 as `packages/api-host`
+- depends only on `@host/context-service`
+- owns route dispatch and transaction handle management for persisted context operations
 
 ## Dependency Rules
 
@@ -150,6 +158,7 @@ Allowed:
 - Provider packages may depend downward on `@host/context-persistence` only, as frozen by ADR-004.
 - Application packages may depend downward on execution abstractions and may bind approved provider packages at application composition roots.
 - `@host/context-service` is the canonical entry point for persisted context operations and depends only on `@host/context-persistence`.
+- `@host/api-host` is the canonical composition point between transports and application services and depends only on `@host/context-service`.
 - Product code may depend on application packages and transport surfaces.
 
 Forbidden:
@@ -169,6 +178,7 @@ The API split is now explicit:
 - persistence composition remains in HOST-2 through `context-runtime` -> `context-store` -> `context-persistence`
 - persistence-backed APIs originate in HOST-3 transports and application services
 - persisted context orchestration begins in `@host/context-service`
+- transport-neutral API dispatch begins in `@host/api-host`
 
 ### Example Request Flow
 
@@ -176,6 +186,8 @@ The API split is now explicit:
 Caller
   ->
 future transport
+  ->
+@host/api-host (HOST-3 route dispatch and API translation)
   ->
 @host/context-service (HOST-3 orchestration and policy)
   ->

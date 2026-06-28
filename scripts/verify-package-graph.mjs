@@ -30,7 +30,7 @@ const executionPackages = {
 
 const providerPackagePrefixes = ['@host/context-provider-'];
 const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
-const applicationPackages = new Set(['@host/context-service']);
+const applicationPackages = new Set(['@host/context-service', '@host/api-host']);
 
 const layerRank = {
   knowledge: 0,
@@ -51,6 +51,7 @@ const allowedProviderDependencies = new Set([
 ]);
 const allowedApplicationDependencies = new Map([
   ['@host/context-service', new Set(['@host/context-persistence'])],
+  ['@host/api-host', new Set(['@host/context-service'])],
 ]);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));

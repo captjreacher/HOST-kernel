@@ -172,9 +172,9 @@ graph
 
 Application Layer
 
-context-service
+@host/context-service
+@host/api-host
 application-runtime
-api-host
 
 ↓
 
@@ -323,6 +323,10 @@ The existing `kernel-api` context endpoints remain runtime-only, while persisten
 
 HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, external transports, and application-specific policies begin without altering HOST-1 or HOST-2 contracts. See [Application Layer Architecture](application-layer.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).
 
+HOST-3.1 implements `@host/context-service` as the canonical persisted context service boundary above the execution stack.
+
+HOST-3.2 implements `@host/api-host` as the canonical transport-neutral composition point between future transports and application services, without introducing HTTP frameworks or provider awareness.
+
 ## Traceability Architecture
 
 ```mermaid
@@ -381,7 +385,8 @@ Current status:
 - Control Plane complete
 - Execution Layer baseline frozen
 - HOST-3 architecture baseline established
-- HOST-3 application implementation deferred beyond this sprint
+- `@host/context-service` implemented
+- `@host/api-host` implemented
 
 ## Reading Order
 

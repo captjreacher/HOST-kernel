@@ -27,8 +27,8 @@ graph TD
   CtxSqliteProvider["@host/context-provider-sqlite"]
   subgraph Application["Application Layer / HOST-3"]
   ContextService["@host/context-service"]
+  ApiHost["@host/api-host"]
   AppRuntime["application-runtime\n(conceptual)"]
-  ApiHost["api-host\n(conceptual)"]
   end
   Products["Products"]
 
@@ -76,8 +76,8 @@ graph TD
   ProviderLayer --> CtxFsProvider
   ProviderLayer --> CtxSqliteProvider
   ContextService --> CtxPersistence
-  AppRuntime --> ContextService
-  ApiHost --> AppRuntime
+  ApiHost --> ContextService
+  AppRuntime --> ApiHost
   Products --> ApiHost
 ```
 
@@ -115,8 +115,8 @@ graph
 Application Layer
 
 @host/context-service
+@host/api-host
 application-runtime
-api-host
 
 ↓
 
@@ -136,13 +136,14 @@ Products
 - Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
 - Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
 - `@host/context-service` is the first implemented HOST-3 package and may depend only on `@host/context-persistence`.
+- `@host/api-host` is the canonical HOST-3 transport-neutral dispatch boundary and may depend only on `@host/context-service`.
 
 ## HOST-3 Conceptual Responsibilities
 
-The Application Layer baseline currently contains one implemented package and two conceptual package responsibilities:
+The Application Layer baseline currently contains two implemented packages and one conceptual package responsibility:
 
 - `@host/context-service` for persistence-backed orchestration, transactions, and application-layer error translation
-- `application-runtime` for composition roots and asynchronous workflow coordination
-- `api-host` for external transports and persistence-backed APIs
+- `@host/api-host` for transport-neutral request handling, route dispatch, and stable API error translation
+- `application-runtime` for broader composition roots and asynchronous workflow coordination
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` dependency rule and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` and `@host/api-host` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.

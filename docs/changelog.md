@@ -35,6 +35,17 @@ This entry records the first Application Layer implementation.
 - provider, filesystem, and SQLite failures are translated into deterministic application-layer service errors
 - integration coverage now runs the same service contract against in-memory, filesystem, and SQLite providers
 
+## HOST-3.2 - Context API Host Boundary
+
+This entry records the transport-neutral API host boundary.
+
+- `@host/api-host` is now implemented as the canonical HOST-3 composition point between future transports and application services
+- the host exposes a stable request and response contract without starting an HTTP listener or importing transport frameworks
+- context CRUD, query, and transaction routes now dispatch through injected `@host/context-service` instances
+- service failures are translated into stable API responses without exposing provider, filesystem, or SQLite details
+- transaction handles are managed inside the API host boundary so future adapters can remain protocol-specific only
+- dependency rules now enforce `@host/api-host` -> `@host/context-service` only
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

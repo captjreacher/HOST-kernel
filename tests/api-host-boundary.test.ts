@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-test('HOST-3.1 keeps context-service in the application layer with no provider coupling or reverse dependencies', () => {
+test('HOST-3.2 keeps api-host in the application layer with no transport or reverse coupling', () => {
   const root = process.cwd();
   const packagesDir = path.join(root, 'packages');
   const workspacePackages = fs
@@ -12,19 +12,19 @@ test('HOST-3.1 keeps context-service in the application layer with no provider c
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
-  assert.equal(workspacePackages.includes('context-service'), true);
+  assert.equal(workspacePackages.includes('api-host'), true);
 
-  const packageJsonPath = path.join(packagesDir, 'context-service', 'package.json');
+  const packageJsonPath = path.join(packagesDir, 'api-host', 'package.json');
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
     dependencies?: Record<string, string>;
     name: string;
   };
 
-  assert.equal(packageJson.name, '@host/context-service');
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-persistence']);
+  assert.equal(packageJson.name, '@host/api-host');
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-service']);
 
   for (const packageDir of workspacePackages) {
-    if (packageDir === 'context-service' || packageDir === 'api-host') {
+    if (packageDir === 'api-host') {
       continue;
     }
 
@@ -36,9 +36,9 @@ test('HOST-3.1 keeps context-service in the application layer with no provider c
 
     const dependencies = Object.keys(otherPackageJson.dependencies ?? {});
     assert.equal(
-      dependencies.includes('@host/context-service'),
+      dependencies.includes('@host/api-host'),
       false,
-      `${otherPackageJson.name} must not depend on @host/context-service.`,
+      `${otherPackageJson.name} must not depend on @host/api-host.`,
     );
   }
 });
