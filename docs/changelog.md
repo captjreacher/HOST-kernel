@@ -24,6 +24,17 @@ This entry records the HOST-3.0 architecture baseline.
 - conceptual HOST-3 package responsibilities are documented as `context-service`, `application-runtime`, and `api-host`
 - ADR-006 records the baseline without creating application packages or implementing business logic
 
+## HOST-3.1 - Context Service Boundary
+
+This entry records the first Application Layer implementation.
+
+- `@host/context-service` is now implemented as the canonical HOST-3 boundary for persisted context operations
+- the service composes provider-backed stores through `@host/context-persistence` without depending on concrete provider packages
+- the service exposes asynchronous create, retrieve, update, delete, query, and transaction entry points
+- session and transaction lifecycle are managed through the existing execution-layer abstractions
+- provider, filesystem, and SQLite failures are translated into deterministic application-layer service errors
+- integration coverage now runs the same service contract against in-memory, filesystem, and SQLite providers
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

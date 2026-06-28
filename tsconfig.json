@@ -16,6 +16,7 @@
     { "path": "./packages/context-runtime" },
     { "path": "./packages/context-store" },
     { "path": "./packages/context-persistence" },
+    { "path": "./packages/context-service" },
     { "path": "./packages/context-persistence-filesystem" },
     { "path": "./packages/context-persistence-sqlite" }
   ]

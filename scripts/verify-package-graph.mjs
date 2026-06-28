@@ -30,6 +30,7 @@ const executionPackages = {
 
 const providerPackagePrefixes = ['@host/context-provider-'];
 const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
+const applicationPackages = new Set(['@host/context-service']);
 
 const layerRank = {
   knowledge: 0,
@@ -48,6 +49,9 @@ const allowedDependencies = new Map([
 const allowedProviderDependencies = new Set([
   '@host/context-persistence',
 ]);
+const allowedApplicationDependencies = new Map([
+  ['@host/context-service', new Set(['@host/context-persistence'])],
+]);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
 
@@ -64,7 +68,7 @@ const layerFor = (packageName) => {
   if (startsWithAny(packageName, providerPackagePrefixes)) {
     return 'provider';
   }
-  if (startsWithAny(packageName, applicationPackagePrefixes)) {
+  if (applicationPackages.has(packageName) || startsWithAny(packageName, applicationPackagePrefixes)) {
     return 'application';
   }
 
@@ -77,6 +81,15 @@ for (const [name, dependencies] of edges.entries()) {
     for (const dependency of dependencies) {
       if (!allowed.has(dependency)) {
         throw new Error(`${name} may only depend on ${[...allowed].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+  }
+
+  const allowedApplication = allowedApplicationDependencies.get(name);
+  if (allowedApplication) {
+    for (const dependency of dependencies) {
+      if (!allowedApplication.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedApplication].sort().join(', ')} but also depends on ${dependency}.`);
       }
     }
   }

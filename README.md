@@ -18,7 +18,7 @@ Current release: Kernel 1.10 with the HOST-2 execution layer frozen and the HOST
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
 
-Application Layer status: architecture baseline approved; no HOST-3 application packages are implemented in this sprint.
+Application Layer status: `@host/context-service` is implemented as the canonical application-layer boundary for persisted context operations.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -50,6 +50,7 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/context-runtime` for the executable Context Runtime model
 - `packages/context-store` for the canonical Context storage boundary
 - `packages/context-persistence` for the persistence provider framework
+- `packages/context-service` for the application-layer persisted context service boundary
 - `packages/context-persistence-filesystem` for the first concrete filesystem provider-layer adapter
 
 The canonical identifier model is documented in [docs/architecture/identifier-service.md](docs/architecture/identifier-service.md).
@@ -87,4 +88,4 @@ npm run verify:graph
 - The kernel foundation now includes a composed bootstrap runtime in `kernel-core`.
 - The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.
 - The execution layer is frozen as `context-runtime` -> `context-store` -> `context-persistence`, with future adapters required to sit above that boundary.
-- The Application Layer is architecture-defined above the execution/provider stack and below products, with persistence-backed APIs starting there rather than in HOST-1.
+- The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` as the first implemented boundary for persistence-backed context operations.
