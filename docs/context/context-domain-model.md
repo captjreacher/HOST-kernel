@@ -10,7 +10,7 @@
 | Owner | CONTEXT |
 | Last reviewed | 2026-06-28 |
 | Constitution | [OBJ-000](../constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [ADR-001](../architecture/ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](../architecture/ADR-002-host-kernel-operating-model.md) |
+| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [ADR-001](../architecture/ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](../architecture/ADR-002-host-kernel-operating-model.md), [ADR-003](../architecture/ADR-003-context-runtime-governance-alignment.md) |
 
 Canonical conceptual blueprint for the CONTEXT repository.
 
@@ -120,6 +120,27 @@ classDiagram
 - Every object must have an allowed lifecycle.
 - Every object must preserve traceability to the originating Objective or governing decision where applicable.
 - Every derived record must point back to a canonical source object.
+
+## Executable Runtime Alignment
+
+ADR-003 approves the minimum canonical runtime surface required to implement HOST-2.1 without introducing new taxonomy object families.
+
+| Runtime Contract | Classification | Canonical Anchor | Identifier Model | Notes |
+| --- | --- | --- | --- | --- |
+| ContextRecord | Subordinate derived record contract | One canonical source object plus supporting references | None | Must point back to a canonical source object |
+| ContextSnapshot | Subordinate immutable snapshot contract | One or more Context Records captured at a point in time | None | Snapshot is a runtime view, not a taxonomy object |
+| ContextReference | Subordinate reference contract | Existing canonical identifiers or existing `document` validation references | None | Reuses canonical reference kinds rather than defining a new object family |
+| Confidence | Subordinate deterministic value object | Attached to a Context Record or Context Snapshot | None | Expresses confidence without AI interpretation semantics |
+| Freshness | Subordinate deterministic value object | Attached to a Context Record or Context Snapshot | None | Expresses recency or validity metadata only |
+| Provenance | Subordinate deterministic value object | Attached to a Context Record or Context Snapshot | None | Expresses source and attribution lineage only |
+
+HOST-2.4A further freezes the executable layering around these contracts:
+
+- `@host/context-runtime` owns creation, validation, and serialization of the runtime contracts above
+- `@host/context-store` owns versioned storage and transaction boundaries for runtime values
+- `@host/context-persistence` owns provider lifecycle, capability reporting, and store access coordination
+
+These packages remain subordinate execution contracts. They do not create new taxonomy object families and they do not redefine canonical knowledge ownership.
 
 ## Conceptual Examples
 

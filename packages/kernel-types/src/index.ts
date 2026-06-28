@@ -4,7 +4,19 @@ export type ObjectiveLifecycleState = 'draft' | 'proposed' | 'approved' | 'plann
 export type ValidationSeverity = 'info' | 'warning' | 'error';
 export type ValidationOutcome = 'valid' | 'invalid';
 
-export type CanonicalIdentifierType = 'objective' | 'adr' | 'capability' | 'entity' | 'workflow' | 'event' | 'artifact' | 'task';
+export type CanonicalIdentifierType =
+  | 'objective'
+  | 'adr'
+  | 'capability'
+  | 'entity'
+  | 'relationship'
+  | 'workflow'
+  | 'signal'
+  | 'observation'
+  | 'evidence'
+  | 'event'
+  | 'artifact'
+  | 'task';
 export type CanonicalType = CanonicalIdentifierType;
 export type TaxonomyValueKind = 'objectType' | 'identifierPrefix' | 'lifecycleState' | 'relationshipType' | 'eventType';
 export type TaxonomyObjectType =
@@ -148,6 +160,23 @@ export interface Capability extends RegistryRecord {
   dependencies: string[];
 }
 
+export interface Confidence {
+  score: number;
+  note?: string | undefined;
+}
+
+export interface Freshness {
+  observed_at: string;
+  valid_at?: string | undefined;
+  expires_at?: string | undefined;
+}
+
+export interface Provenance {
+  source: string;
+  recorded_at: string;
+  source_objects: readonly ValidationReference[];
+}
+
 export interface ValidationIssue {
   code: ValidationIssueCode;
   path: string;
@@ -193,9 +222,14 @@ export type ValidationIssueCode = (typeof validationIssueCodes)[keyof typeof val
 export type ValidationReferenceKind =
   | 'objective'
   | 'adr'
+  | 'entity'
+  | 'relationship'
   | 'document'
   | 'repository'
   | 'capability'
+  | 'signal'
+  | 'observation'
+  | 'evidence'
   | 'event'
   | 'artifact'
   | 'workflow'
@@ -209,8 +243,26 @@ export interface ValidationReference {
   required?: boolean | undefined;
 }
 
+export interface ContextReference extends ValidationReference {
+  title?: string | undefined;
+}
+
+export interface ContextRecord {
+  source: ContextReference;
+  references: readonly ContextReference[];
+  confidence?: Confidence | undefined;
+  freshness?: Freshness | undefined;
+  provenance: Provenance;
+}
+
+export interface ContextSnapshot {
+  captured_at: string;
+  records: readonly ContextRecord[];
+  references?: readonly ContextReference[] | undefined;
+}
+
 export interface ValidationLookup {
-  lookup(kind: ValidationReferenceKind, id: string): RegistryRecord | undefined;
+  lookup(kind: ValidationReferenceKind, id: string): Identifier | RegistryRecord | undefined;
 }
 
 export interface ValidationContext {

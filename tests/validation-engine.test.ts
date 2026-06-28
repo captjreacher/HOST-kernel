@@ -181,3 +181,10 @@ test('valid document reference', () => {
 
   assert.equal(validation.valid, true);
 });
+
+test('validates canonical context reference kinds through identifier rules', () => {
+  const engine = createValidationEngine();
+  const validation = engine.validateDocumentReference({ kind: 'observation', id: 'OBS-001' });
+
+  assert.equal(validation.valid, true);
+});

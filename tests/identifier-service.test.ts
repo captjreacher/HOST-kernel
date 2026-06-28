@@ -8,7 +8,11 @@ const supportedTypes = [
   ['adr', 'ADR-001'],
   ['capability', 'CAP-001'],
   ['entity', 'ENT-001'],
+  ['relationship', 'RLT-001'],
   ['workflow', 'WF-001'],
+  ['signal', 'SIG-001'],
+  ['observation', 'OBS-001'],
+  ['evidence', 'EVD-001'],
   ['event', 'EVT-001'],
   ['artifact', 'ART-001'],
   ['task', 'TASK-001'],
@@ -55,6 +59,12 @@ test('rejects unsupported identifier prefixes', () => {
   assert.equal(validation.valid, false);
   assert.ok(validation.issues.some((issue) => issue.code === 'identifier.unsupported-type'));
   assert.throws(() => service.parse('XYZ-001'));
+});
+
+test('rejects unsupported identifier families', () => {
+  const service = new CanonicalIdentifierService();
+
+  assert.throws(() => service.generate('context-record' as never));
 });
 
 test('duplicate allocation is prevented through the registry abstraction', () => {

@@ -1,5 +1,11 @@
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
-import type { KernelHealthCheckResult, KernelRuntime, KernelRuntimeConfig } from '@host/kernel-core';
+import type {
+  KernelContextRuntimeKind,
+  KernelContextRuntimeValidationResult,
+  KernelHealthCheckResult,
+  KernelRuntime,
+  KernelRuntimeConfig,
+} from '@host/kernel-core';
 import type { ValidationIssue, ValidationResult } from '@host/kernel-types';
 
 export interface KernelApiBootstrapStatus {
@@ -73,3 +79,12 @@ export interface KernelTaxonomyResponse {
 export interface KernelValidationEnvelope extends ValidationResult {
   subject: 'repository' | 'document' | 'registry-record';
 }
+
+export interface KernelContextCapabilitiesResponse {
+  installed: boolean;
+  version?: string | undefined;
+  create: readonly KernelContextRuntimeKind[];
+  validate: readonly KernelContextRuntimeKind[];
+}
+
+export interface KernelContextValidationEnvelope extends KernelContextRuntimeValidationResult {}

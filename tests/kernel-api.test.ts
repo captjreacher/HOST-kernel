@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { createKernelApi, KernelApiBootstrapError } from '../packages/kernel-api/src/index.ts';
+import { createContextRuntimeAdapter } from '../packages/context-runtime/src/index.ts';
 import { RegistryService } from '@host/kernel-registry';
 import { seedRegistry } from './fixtures/registry-seed.ts';
 
-const startApiServer = async (seeded = false) => {
+const startApiServer = async (seeded = false, withContextRuntime = false) => {
   const registry = new RegistryService();
   if (seeded) {
     seedRegistry(registry);
@@ -14,6 +15,16 @@ const startApiServer = async (seeded = false) => {
   const api = createKernelApi({
     kernelConfig: {
       registry,
+      ...(withContextRuntime
+        ? {
+            runtimeAdapters: {
+              context: createContextRuntimeAdapter({
+                now: () => '2026-06-28T12:00:00.000Z',
+                version: '1.0.0',
+              }),
+            },
+          }
+        : {}),
     },
   });
 
@@ -215,6 +226,80 @@ test('kernel api validation endpoint returns deterministic validation results wi
     assert.equal(payload.data.subject, 'repository');
     assert.equal(payload.data.valid, false);
     assert.ok(payload.data.issues.some((issue: { code: string }) => issue.code === 'validation.repository.owner.missing'));
+  } finally {
+    await harness.close();
+  }
+});
+
+test('kernel api context endpoints expose safe validation and creation entry points when the adapter is installed', async () => {
+  const harness = await startApiServer(false, true);
+  try {
+    const capabilitiesResponse = await fetch(`${harness.baseUrl}/kernel/context`);
+    assert.equal(capabilitiesResponse.status, 200);
+    const capabilitiesPayload = await capabilitiesResponse.json();
+    assert.equal(capabilitiesPayload.data.installed, true);
+    assert.equal(capabilitiesPayload.data.version, '1.0.0');
+
+    const validateResponse = await fetch(`${harness.baseUrl}/kernel/context/validate/context-record`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: { kind: 'observation', id: 'OBS-001' },
+        references: [{ kind: 'document', id: 'OBJ-004' }],
+        provenance: {
+          source: 'kernel-api-test',
+          source_objects: [{ kind: 'objective', id: 'OBJ-001' }],
+        },
+      }),
+    });
+    assert.equal(validateResponse.status, 200);
+    const validatePayload = await validateResponse.json();
+    assert.equal(validatePayload.data.subject, 'context-record');
+    assert.equal(validatePayload.data.valid, true);
+
+    const createResponse = await fetch(`${harness.baseUrl}/kernel/context/context-record`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: { kind: 'observation', id: 'OBS-001', title: 'Observation' },
+        provenance: {
+          source: 'kernel-api-test',
+          source_objects: [{ kind: 'objective', id: 'OBJ-001' }],
+        },
+      }),
+    });
+    assert.equal(createResponse.status, 201);
+    const createPayload = await createResponse.json();
+    assert.equal(createPayload.data.runtime_kind, 'context-record');
+    assert.equal(createPayload.data.source.id, 'OBS-001');
+  } finally {
+    await harness.close();
+  }
+});
+
+test('kernel api context endpoints stay unavailable when the adapter is not installed', async () => {
+  const harness = await startApiServer();
+  try {
+    const response = await fetch(`${harness.baseUrl}/kernel/context/context-record`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        source: { kind: 'observation', id: 'OBS-001' },
+        provenance: {
+          source: 'kernel-api-test',
+          source_objects: [{ kind: 'objective', id: 'OBJ-001' }],
+        },
+      }),
+    });
+    assert.equal(response.status, 404);
+    const payload = await response.json();
+    assert.equal(payload.error.code, 'kernel-api.context.not-enabled');
   } finally {
     await harness.close();
   }

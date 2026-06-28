@@ -22,6 +22,112 @@ for (const [name, packageJson] of packageByName.entries()) {
   edges.set(name, dependencies);
 }
 
+const executionPackages = {
+  runtime: '@host/context-runtime',
+  store: '@host/context-store',
+  persistence: '@host/context-persistence',
+};
+
+const providerPackagePrefixes = ['@host/context-provider-'];
+const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
+
+const layerRank = {
+  knowledge: 0,
+  executionRuntime: 1,
+  executionStore: 2,
+  executionPersistence: 3,
+  provider: 4,
+  application: 5,
+};
+
+const allowedDependencies = new Map([
+  [executionPackages.runtime, new Set(['@host/kernel-core', '@host/kernel-types'])],
+  [executionPackages.store, new Set(['@host/context-runtime', '@host/kernel-core', '@host/kernel-types'])],
+  [executionPackages.persistence, new Set(['@host/context-store', '@host/context-runtime', '@host/kernel-core', '@host/kernel-types'])],
+]);
+const allowedProviderDependencies = new Set([
+  '@host/context-persistence',
+]);
+
+const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
+
+const layerFor = (packageName) => {
+  if (packageName === executionPackages.runtime) {
+    return 'executionRuntime';
+  }
+  if (packageName === executionPackages.store) {
+    return 'executionStore';
+  }
+  if (packageName === executionPackages.persistence) {
+    return 'executionPersistence';
+  }
+  if (startsWithAny(packageName, providerPackagePrefixes)) {
+    return 'provider';
+  }
+  if (startsWithAny(packageName, applicationPackagePrefixes)) {
+    return 'application';
+  }
+
+  return 'knowledge';
+};
+
+for (const [name, dependencies] of edges.entries()) {
+  const allowed = allowedDependencies.get(name);
+  if (allowed) {
+    for (const dependency of dependencies) {
+      if (!allowed.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowed].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+  }
+
+  const packageLayer = layerFor(name);
+  for (const dependency of dependencies) {
+    const dependencyLayer = layerFor(dependency);
+    if (layerRank[dependencyLayer] > layerRank[packageLayer]) {
+      throw new Error(`${name} (${packageLayer}) must not depend on ${dependency} (${dependencyLayer}); dependency direction must remain downward only.`);
+    }
+  }
+
+  if (packageLayer === 'provider') {
+    for (const dependency of dependencies) {
+      if (!allowedProviderDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedProviderDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes(executionPackages.persistence)) {
+      throw new Error(`${name} must depend on ${executionPackages.persistence} as the canonical execution-layer entry point.`);
+    }
+    if (dependencies.some((dependency) => layerFor(dependency) === 'application')) {
+      throw new Error(`${name} must not depend on application packages.`);
+    }
+  }
+}
+
+for (const [name, dependencies] of edges.entries()) {
+  if (name !== executionPackages.runtime && dependencies.includes(executionPackages.runtime)) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'executionStore' && dependentLayer !== 'executionPersistence' && dependentLayer !== 'provider') {
+      throw new Error(`${name} must not depend on ${executionPackages.runtime}; dependency direction must remain within the frozen execution and provider stack.`);
+    }
+  }
+
+  if (name !== executionPackages.store && dependencies.includes(executionPackages.store)) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'executionPersistence' && dependentLayer !== 'provider') {
+      throw new Error(`${name} must not depend on ${executionPackages.store}; only ${executionPackages.persistence} or approved providers may sit above the store boundary.`);
+    }
+  }
+
+  if (name !== executionPackages.persistence && dependencies.includes(executionPackages.persistence)) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'provider' && dependentLayer !== 'application') {
+      throw new Error(`${name} must not depend on ${executionPackages.persistence}; only providers or applications may sit above the persistence boundary.`);
+    }
+  }
+}
+
 const visiting = new Set();
 const visited = new Set();
 const stack = [];
@@ -49,4 +155,4 @@ for (const name of packageByName.keys()) {
   visit(name);
 }
 
-console.log(`Verified ${packageByName.size} workspace packages with no dependency cycles.`);
+console.log(`Verified ${packageByName.size} workspace packages with no dependency cycles and a valid layered package graph.`);

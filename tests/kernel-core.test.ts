@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createKernel, KernelBootstrapError } from '@host/kernel-core';
+import { createContextRuntimeAdapter } from '../packages/context-runtime/src/index.ts';
 
 test('bootstrap success', () => {
   const kernel = createKernel();
@@ -14,6 +15,34 @@ test('bootstrap success', () => {
   assert.equal(typeof kernel.objectives.createObjective, 'function');
   assert.equal(typeof kernel.documents.discoverConstitutionalArtifacts, 'function');
   assert.equal(typeof kernel.repositories.list, 'function');
+  assert.equal(kernel.adapters.context, undefined);
+});
+
+test('context runtime adapter can be composed without reversing package dependencies', () => {
+  const kernel = createKernel({
+    runtimeAdapters: {
+      context: createContextRuntimeAdapter({
+        now: () => '2026-06-28T12:00:00.000Z',
+        version: '1.0.0',
+      }),
+    },
+  });
+
+  const snapshot = kernel.adapters.context?.createSnapshot({
+    records: [
+      {
+        source: { kind: 'observation', id: 'OBS-001' },
+        provenance: {
+          source: 'kernel-core-test',
+          source_objects: [{ kind: 'objective', id: 'OBJ-001' }],
+        },
+      },
+    ],
+  });
+
+  assert.ok(snapshot);
+  assert.equal(snapshot?.runtime_kind, 'context-snapshot');
+  assert.equal(kernel.healthCheck().checks.some((check) => check.name === 'context-runtime-adapter' && check.healthy), true);
 });
 
 test('service availability', () => {
@@ -60,5 +89,8 @@ test('no product-specific dependencies', () => {
 
   assert.equal('products' in kernel, false);
   assert.equal('productRegistry' in kernel, false);
-  assert.deepEqual(Object.keys(kernel).sort(), ['documents', 'healthCheck', 'identifiers', 'objectives', 'repositories', 'registry', 'taxonomy', 'validation'].sort());
+  assert.deepEqual(
+    Object.keys(kernel).sort(),
+    ['adapters', 'documents', 'healthCheck', 'identifiers', 'objectives', 'repositories', 'registry', 'taxonomy', 'validation'].sort(),
+  );
 });

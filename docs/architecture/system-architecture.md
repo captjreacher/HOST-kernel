@@ -8,9 +8,9 @@
 | Status | Architecture Baseline Approved |
 | Version | 1.0 |
 | Owner | HOST |
-| Last reviewed | 2026-06-28 |
+| Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](../constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md) |
+| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md) |
 
 ## Executive Overview
 
@@ -117,14 +117,52 @@ Responsibilities:
 
 ### Execution Plane
 
-Owned by product repositories.
+Owned by HOST execution architecture until application-specific adapters begin.
 
 Responsibilities:
 
-- implementation
-- testing
-- deployment
-- releases
+- runtime execution boundaries
+- storage boundaries
+- persistence-provider coordination
+- deterministic contract enforcement
+
+The canonical execution stack is frozen as:
+
+```text
+Knowledge Plane
+
+kernel-types
+kernel-core
+kernel-taxonomy
+kernel-validation
+kernel-api
+
+↓
+
+Execution Plane
+
+context-runtime
+context-store
+context-persistence
+
+↓
+
+Future Provider Layer
+
+filesystem
+sqlite
+postgres
+supabase
+graph
+
+↓
+
+Application Layer
+
+HOST products
+```
+
+Product repositories remain the implementation and delivery plane for product code, but they do not own the execution-layer package boundaries defined above.
 
 ## Repository Interaction Model
 
@@ -248,6 +286,18 @@ It shows how operator interactions, AI sessions, registry access, context update
 
 No implementation detail is implied by the diagram.
 
+The executable Context Runtime now sits behind a canonical storage boundary package and a canonical persistence-provider framework:
+
+- `@host/context-runtime` owns immutable runtime values and deterministic validation for the Context model
+- `@host/context-store` owns storage contracts, snapshots, transactions, and optimistic versioning semantics
+- `@host/context-persistence` owns provider registration, lifecycle, capability discovery, and health reporting
+
+No concrete persistence technology is selected inside the execution plane.
+
+Future adapters must land in a provider layer below applications and above the execution plane according to [ADR-004](ADR-004-execution-layer-architecture-baseline.md).
+
+HOST-2.5 introduces the first concrete provider-layer implementation as a filesystem adapter package, `@host/context-provider-filesystem`, without changing the frozen execution-plane package boundaries.
+
 ## Traceability Architecture
 
 ```mermaid
@@ -337,3 +387,5 @@ It aligns with Governance Baseline v1.0 because:
 Governance Baseline v1.0 - Frozen
 
 Architecture Baseline v1.0 - Approved
+
+Execution Layer Baseline v1.0 - Frozen

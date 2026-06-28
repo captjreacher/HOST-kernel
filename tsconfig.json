@@ -12,6 +12,11 @@
     { "path": "./packages/kernel-registry" },
     { "path": "./packages/kernel-test-utils" },
     { "path": "./packages/kernel-core" },
-    { "path": "./packages/kernel-api" }
+    { "path": "./packages/kernel-api" },
+    { "path": "./packages/context-runtime" },
+    { "path": "./packages/context-store" },
+    { "path": "./packages/context-persistence" },
+    { "path": "./packages/context-persistence-filesystem" },
+    { "path": "./packages/context-persistence-sqlite" }
   ]
 }

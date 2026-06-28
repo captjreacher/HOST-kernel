@@ -121,3 +121,7 @@ HOST owns:
 Any future repository or document may adopt this registry without modification.
 
 That means the repository may reference the registry, but it may not redefine its terms, codes, or boundaries.
+
+Subordinate runtime contracts may be defined by governance without becoming new canonical lookup-table object families.
+
+Those contracts must reuse the existing canonical object families and identifier model unless a future Objective and ADR explicitly extend the registry.

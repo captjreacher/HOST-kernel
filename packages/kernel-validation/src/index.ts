@@ -35,7 +35,12 @@ export interface ValidationEngineOptions {
 const canonicalReferenceKinds = new Set<ValidationReferenceKind>([
   'objective',
   'adr',
+  'entity',
+  'relationship',
   'capability',
+  'signal',
+  'observation',
+  'evidence',
   'event',
   'artifact',
   'workflow',

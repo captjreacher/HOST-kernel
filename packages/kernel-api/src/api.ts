@@ -1,5 +1,18 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
-import { createKernel, KernelBootstrapError, type KernelHealthCheckResult, type KernelRuntime, type KernelRuntimeConfig } from '@host/kernel-core';
+import {
+  createKernel,
+  type KernelConfidenceInput,
+  type KernelContextRecordInput,
+  KernelBootstrapError,
+  type KernelContextReferenceInput,
+  type KernelContextRuntimeKind,
+  type KernelContextSnapshotInput,
+  type KernelFreshnessInput,
+  type KernelHealthCheckResult,
+  type KernelProvenanceInput,
+  type KernelRuntime,
+  type KernelRuntimeConfig,
+} from '@host/kernel-core';
 import { RegistryError } from '@host/kernel-registry';
 import type { ObjectiveCreateInput, ObjectiveUpdateInput } from '@host/kernel-objectives';
 import type { Document, RegistryRecord, Repository, ValidationIssue, ValidationReference, ValidationResult } from '@host/kernel-types';
@@ -7,6 +20,8 @@ import {
   type KernelApiApplication,
   type KernelApiBootstrapStatus,
   type KernelApiConfig,
+  type KernelContextCapabilitiesResponse,
+  type KernelContextValidationEnvelope,
   type KernelApiErrorBody,
   type KernelApiResponse,
   KernelApiBootstrapError,
@@ -16,6 +31,7 @@ import {
 } from './contracts.js';
 
 const expectedConstitutionalArtifacts = ['HOST-0', 'OBJ-000', 'OBJ-001', 'OBJ-002', 'OBJ-003', 'OBJ-004', 'OBJ-005', 'OBJ-006'] as const;
+const contextSubjects = ['context-reference', 'confidence', 'freshness', 'provenance', 'context-record', 'context-snapshot'] as const;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -165,6 +181,66 @@ const matchRoute = (pattern: string, pathname: string): RouteMatch | undefined =
 
 const routeParam = (match: RouteMatch, key: string): string => match.params[key] ?? '';
 
+const hasContextRuntime = (runtime: KernelRuntime): boolean => runtime.adapters.context !== undefined;
+const requireContextRuntime = (runtime: KernelRuntime) =>
+  runtime.adapters.context ?? (() => {
+    throw errorResponse(404, 'kernel-api.context.not-enabled', 'Context runtime adapter is not installed for this kernel runtime.');
+  })();
+
+const contextCapabilities = (runtime: KernelRuntime): KernelContextCapabilitiesResponse => ({
+  installed: hasContextRuntime(runtime),
+  ...(runtime.adapters.context !== undefined ? { version: runtime.adapters.context.version.version } : {}),
+  create: [...contextSubjects],
+  validate: [...contextSubjects],
+});
+
+const asContextSubject = (value: string): KernelContextRuntimeKind | undefined =>
+  contextSubjects.find((candidate) => candidate === value);
+
+const createContextValue = (
+  runtime: KernelRuntime,
+  subject: KernelContextRuntimeKind,
+  payload: JsonRecord,
+): unknown => {
+  const adapter = requireContextRuntime(runtime);
+  switch (subject) {
+    case 'context-reference':
+      return adapter.createReference(payload as unknown as KernelContextReferenceInput);
+    case 'confidence':
+      return adapter.createConfidence(payload as unknown as KernelConfidenceInput);
+    case 'freshness':
+      return adapter.createFreshness(payload as unknown as KernelFreshnessInput);
+    case 'provenance':
+      return adapter.createProvenance(payload as unknown as KernelProvenanceInput);
+    case 'context-record':
+      return adapter.createRecord(payload as unknown as KernelContextRecordInput);
+    case 'context-snapshot':
+      return adapter.createSnapshot(payload as unknown as KernelContextSnapshotInput);
+  }
+};
+
+const validateContextValue = (
+  runtime: KernelRuntime,
+  subject: KernelContextRuntimeKind,
+  payload: JsonRecord,
+): KernelContextValidationEnvelope => {
+  const adapter = requireContextRuntime(runtime);
+  switch (subject) {
+    case 'context-reference':
+      return adapter.validateReference(payload as unknown as KernelContextReferenceInput);
+    case 'confidence':
+      return adapter.validateConfidence(payload as unknown as KernelConfidenceInput);
+    case 'freshness':
+      return adapter.validateFreshness(payload as unknown as KernelFreshnessInput);
+    case 'provenance':
+      return adapter.validateProvenance(payload as unknown as KernelProvenanceInput);
+    case 'context-record':
+      return adapter.validateRecord(payload as unknown as KernelContextRecordInput);
+    case 'context-snapshot':
+      return adapter.validateSnapshot(payload as unknown as KernelContextSnapshotInput);
+  }
+};
+
 const routeHealth = (_runtime: KernelRuntime, bootstrap: KernelApiBootstrapStatus, bootstrapHealth: KernelHealthCheckResult): KernelHealthResponse => ({
   runtime: bootstrapHealth,
   bootstrap,
@@ -256,13 +332,37 @@ const objectiveUpdateInput = (value: JsonRecord): ObjectiveUpdateInput => {
 };
 
 const normalizeError = (error: unknown): KernelApiResponse => {
+  if (isKernelApiResponse(error)) {
+    return error;
+  }
   if (error instanceof RegistryError) {
     return errorResponse(400, 'kernel-api.validation.failed', error.message, error.issues);
+  }
+  if (isContextRuntimeError(error)) {
+    return errorResponse(400, 'kernel-api.context.invalid', error.message, error.issues);
   }
   if (error instanceof Error) {
     return errorResponse(500, 'kernel-api.internal-error', error.message);
   }
   return errorResponse(500, 'kernel-api.internal-error', 'Unknown kernel API failure.');
+};
+
+const isKernelApiResponse = (value: unknown): value is KernelApiResponse => {
+  return (
+    isObject(value) &&
+    typeof value.status === 'number' &&
+    isObject(value.body) &&
+    ('data' in value.body || 'error' in value.body)
+  );
+};
+
+const isContextRuntimeError = (value: unknown): value is { message: string; issues: ValidationIssue[] } => {
+  return (
+    isObject(value) &&
+    typeof value.message === 'string' &&
+    Array.isArray(value.issues) &&
+    value.issues.every((issue) => isObject(issue) && typeof issue.code === 'string' && typeof issue.path === 'string')
+  );
 };
 
 class KernelApiRuntime implements KernelApiApplication {
@@ -399,6 +499,46 @@ class KernelApiRuntime implements KernelApiApplication {
           return errorResponse(400, 'kernel-api.request.invalid-body', 'Request body must be a JSON object.');
         }
         return response(200, validateGovernedObject(parsed.value, this.runtime));
+      }
+
+      if (method === 'GET' && pathname === '/kernel/context') {
+        return response(200, contextCapabilities(this.runtime));
+      }
+
+      const contextCreateMatch = matchRoute('/kernel/context/:subject', pathname);
+      if (method === 'POST' && contextCreateMatch) {
+        const subject = asContextSubject(routeParam(contextCreateMatch, 'subject'));
+        if (!subject) {
+          return errorResponse(404, 'kernel-api.route.not-found', `Unknown endpoint: ${method} ${pathname}`);
+        }
+
+        const parsed = parseJsonBody(body);
+        if (!parsed.ok) {
+          return parsed.response;
+        }
+        if (!isObject(parsed.value)) {
+          return errorResponse(400, 'kernel-api.request.invalid-body', 'Request body must be a JSON object.');
+        }
+
+        return response(201, createContextValue(this.runtime, subject, parsed.value));
+      }
+
+      const contextValidationMatch = matchRoute('/kernel/context/validate/:subject', pathname);
+      if (method === 'POST' && contextValidationMatch) {
+        const subject = asContextSubject(routeParam(contextValidationMatch, 'subject'));
+        if (!subject) {
+          return errorResponse(404, 'kernel-api.route.not-found', `Unknown endpoint: ${method} ${pathname}`);
+        }
+
+        const parsed = parseJsonBody(body);
+        if (!parsed.ok) {
+          return parsed.response;
+        }
+        if (!isObject(parsed.value)) {
+          return errorResponse(400, 'kernel-api.request.invalid-body', 'Request body must be a JSON object.');
+        }
+
+        return response(200, validateContextValue(this.runtime, subject, parsed.value));
       }
 
       return errorResponse(404, 'kernel-api.route.not-found', `Unknown endpoint: ${method} ${pathname}`);

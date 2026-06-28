@@ -1,0 +1,25 @@
+{
+  "name": "@host/context-store",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@host/context-runtime": "file:../context-runtime",
+    "@host/kernel-core": "file:../kernel-core",
+    "@host/kernel-types": "file:../kernel-types"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

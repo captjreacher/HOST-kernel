@@ -128,3 +128,16 @@ Examples:
 | `QUE` | Names a queue | Runtime owner | Provisioned -> active -> retired | `QUE-001` |
 | `NOT` | Names a notification | Runtime owner | Created -> delivered -> archived | `NOT-001` |
 | `EXE` | Names an execution | Runtime owner | Created -> running -> complete | `EXE-001` |
+
+## Subordinate Runtime Contracts
+
+The following HOST-2.1 Context Runtime contracts are canonical subordinate value surfaces and do not receive standalone identifier families:
+
+- `ContextRecord`
+- `ContextSnapshot`
+- `ContextReference`
+- `Confidence`
+- `Freshness`
+- `Provenance`
+
+These contracts must remain attached to canonical Context objects or Control Plane references rather than expanding the OBJ-001 identifier family set.

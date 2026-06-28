@@ -7,7 +7,16 @@ import { KernelTaxonomyResolver } from '@host/kernel-taxonomy';
 import type { TaxonomyResolver } from '@host/kernel-types';
 import { KernelValidationEngine, type ValidationEngine } from '@host/kernel-validation';
 import { KernelBootstrapError } from './contracts.js';
-import type { KernelHealthCheckItem, KernelHealthCheckResult, KernelRepositoryAccessor, KernelRuntime, KernelRuntimeConfig } from './contracts.js';
+import type {
+  KernelHealthCheckItem,
+  KernelHealthCheckResult,
+  KernelRuntimeAdapterHost,
+  KernelRepositoryAccessor,
+  KernelRuntime,
+  KernelRuntimeAdapterConfig,
+  KernelRuntimeAdapters,
+  KernelRuntimeConfig,
+} from './contracts.js';
 
 const assertBoolean = (value: unknown, name: string): void => {
   if (value !== undefined && typeof value !== 'boolean') {
@@ -103,6 +112,19 @@ const validateConfig = (config: KernelRuntimeConfig): void => {
       'validateRegistryRecord',
     ]);
   }
+  if (config.runtimeAdapters !== undefined) {
+    assertRuntimeAdapters(config.runtimeAdapters);
+  }
+};
+
+const assertRuntimeAdapters = (value: KernelRuntimeAdapterConfig): void => {
+  if (!value || typeof value !== 'object') {
+    throw new KernelBootstrapError('Invalid kernel bootstrap config: runtimeAdapters must be an object when provided.');
+  }
+
+  if (value.context !== undefined && typeof value.context !== 'function') {
+    throw new KernelBootstrapError('Invalid kernel bootstrap config: runtimeAdapters.context must be a function when provided.');
+  }
 };
 
 const healthItem = (name: string, healthy: boolean, message: string): KernelHealthCheckItem => ({
@@ -125,8 +147,7 @@ export const createKernel = (config: KernelRuntimeConfig = {}): KernelRuntime =>
       ? new DocumentRegistryService({ registry })
       : new DocumentRegistryService({ registry, seedConstitutionalArtifacts: config.seedConstitutionalArtifacts });
   const repositories = new KernelRepositoryCatalog(registry);
-
-  const runtime: KernelRuntime = Object.freeze({
+  const runtimeBase = {
     identifiers,
     taxonomy,
     validation,
@@ -134,6 +155,9 @@ export const createKernel = (config: KernelRuntimeConfig = {}): KernelRuntime =>
     objectives,
     documents,
     repositories,
+  } as const;
+  const runtimeWithHealth: KernelRuntimeAdapterHost = {
+    ...runtimeBase,
     healthCheck(): KernelHealthCheckResult {
       const constitutionalArtifacts = documents.discoverConstitutionalArtifacts();
       const expectedArtifactIds = ['OBJ-000', 'OBJ-001', 'OBJ-002', 'OBJ-003', 'OBJ-004', 'OBJ-005', 'OBJ-006', 'HOST-0'];
@@ -146,6 +170,11 @@ export const createKernel = (config: KernelRuntimeConfig = {}): KernelRuntime =>
         healthItem('objectives', typeof objectives.listObjectives === 'function', 'Objective registry is available.'),
         healthItem('documents', typeof documents.discoverConstitutionalArtifacts === 'function', 'Document registry is available.'),
         healthItem('repositories', typeof repositories.list === 'function', 'Repository accessor is available.'),
+        healthItem(
+          'context-runtime-adapter',
+          runtime.adapters.context === undefined || typeof runtime.adapters.context.createSnapshot === 'function',
+          runtime.adapters.context === undefined ? 'Context runtime adapter is not installed.' : 'Context runtime adapter is available.',
+        ),
         healthItem(
           'constitutional-artifacts',
           expectedArtifactIds.every((id) => discoveredArtifactIds.includes(id)) && discoveredArtifactIds.length === expectedArtifactIds.length,
@@ -162,6 +191,13 @@ export const createKernel = (config: KernelRuntimeConfig = {}): KernelRuntime =>
         issues,
       };
     },
+  };
+  const adapters: KernelRuntimeAdapters = Object.freeze({
+    ...(config.runtimeAdapters?.context !== undefined ? { context: config.runtimeAdapters.context(runtimeWithHealth) } : {}),
+  });
+  const runtime: KernelRuntime = Object.freeze({
+    ...runtimeWithHealth,
+    adapters,
   });
 
   const bootstrapHealth = runtime.healthCheck();
