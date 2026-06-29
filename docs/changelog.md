@@ -23,6 +23,29 @@ This entry records the HOST-4.0 architecture baseline for reusable external inte
 - dependency rules now reserve future `@host/integration-*` packages above runtime composition while forbidding direct integration dependencies on transport, application, execution, provider, or HOST-1 kernel packages
 - ADR-008 records the baseline without creating integration packages or implementing runtime integrations
 
+## HOST-4E - Integration Foundation
+
+This entry records the HOST-4E implementation foundation for the Integration Layer.
+
+- `@host/integration-contracts` is now implemented as the canonical Integration Layer package above `@host/runtime-composition`
+- the package now defines reusable lifecycle, initialization, shutdown, health, capability discovery, configuration, and dependency injection contracts
+- a reusable integration registry now supports registration, discovery, capability queries, duplicate validation, and health reporting
+- deterministic integration bootstrap is now implemented with canonical startup and shutdown ordering above runtime composition
+- reusable configuration contracts now support schemas, defaults, validation, secret references, and environment overlays without introducing any configuration provider
+- graph verification now enforces `@host/integration-contracts` -> `@host/runtime-composition` as the canonical dependency boundary
+- no MCP runtime, REST client, GraphQL client, queue, webhook, scheduler, or third-party integration implementation is introduced
+
+## HOST-4.5 - MCP Integration Runtime
+
+This entry records the first concrete Integration Layer runtime.
+
+- `@host/integration-mcp` is now implemented as the reference MCP integration package above `@host/integration-contracts`
+- the package now exposes canonical HOST context operations as MCP tools and read-only integration resources
+- MCP requests now translate through `@host/runtime-composition` and the frozen REST/API Host path without bypassing transport or application boundaries
+- deterministic lifecycle, health, capability discovery, and MCP error translation are now covered by automated tests
+- graph verification now enforces `@host/integration-mcp` -> `@host/integration-contracts` as the canonical concrete integration dependency boundary
+- no Hermes, prompt orchestration, product-specific tool, or third-party SDK runtime is introduced
+
 ## HOST-3.0 - Application Layer Architecture Baseline
 
 This entry records the HOST-3.0 architecture baseline.

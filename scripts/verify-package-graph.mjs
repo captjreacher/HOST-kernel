@@ -35,6 +35,7 @@ const transportPackages = new Set(['@host/transport-adapter', '@host/transport-r
 const runtimeHostPackages = new Set(['@host/rest-runtime-host']);
 const runtimeCompositionPackages = new Set(['@host/runtime-composition']);
 const integrationPackagePrefixes = ['@host/integration-'];
+const integrationFoundationPackages = new Set(['@host/integration-contracts']);
 
 const layerRank = {
   knowledge: 0,
@@ -46,7 +47,8 @@ const layerRank = {
   transport: 6,
   runtimeHost: 7,
   runtimeComposition: 8,
-  integration: 9,
+  integrationFoundation: 9,
+  integrationImplementation: 10,
 };
 
 const allowedDependencies = new Map([
@@ -81,7 +83,8 @@ const allowedRuntimeCompositionDependencies = new Map([
     ]),
   ],
 ]);
-const allowedIntegrationDependencies = new Set(['@host/runtime-composition']);
+const allowedIntegrationFoundationDependencies = new Set(['@host/runtime-composition']);
+const allowedIntegrationImplementationDependencies = new Set(['@host/integration-contracts']);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
 
@@ -110,8 +113,11 @@ const layerFor = (packageName) => {
   if (runtimeCompositionPackages.has(packageName)) {
     return 'runtimeComposition';
   }
+  if (integrationFoundationPackages.has(packageName)) {
+    return 'integrationFoundation';
+  }
   if (startsWithAny(packageName, integrationPackagePrefixes)) {
-    return 'integration';
+    return 'integrationImplementation';
   }
 
   return 'knowledge';
@@ -186,15 +192,27 @@ for (const [name, dependencies] of edges.entries()) {
     }
   }
 
-  if (packageLayer === 'integration') {
+  if (packageLayer === 'integrationFoundation') {
     for (const dependency of dependencies) {
-      if (!allowedIntegrationDependencies.has(dependency)) {
-        throw new Error(`${name} may only depend on ${[...allowedIntegrationDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      if (!allowedIntegrationFoundationDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationFoundationDependencies].sort().join(', ')} but also depends on ${dependency}.`);
       }
     }
 
     if (!dependencies.includes('@host/runtime-composition')) {
       throw new Error(`${name} must depend on @host/runtime-composition as the canonical runtime bootstrap entry point.`);
+    }
+  }
+
+  if (packageLayer === 'integrationImplementation') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationImplementationDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationImplementationDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/integration-contracts')) {
+      throw new Error(`${name} must depend on @host/integration-contracts as the canonical Integration Layer foundation package.`);
     }
   }
 }
@@ -244,8 +262,15 @@ for (const [name, dependencies] of edges.entries()) {
 
   if (name !== '@host/runtime-composition' && dependencies.includes('@host/runtime-composition')) {
     const dependentLayer = layerFor(name);
-    if (dependentLayer !== 'integration') {
-      throw new Error(`${name} must not depend on @host/runtime-composition; only integration packages may sit above the runtime composition boundary inside the workspace graph.`);
+    if (dependentLayer !== 'integrationFoundation') {
+      throw new Error(`${name} must not depend on @host/runtime-composition; only @host/integration-contracts may sit directly above the runtime composition boundary inside the workspace graph.`);
+    }
+  }
+
+  if (name !== '@host/integration-contracts' && dependencies.includes('@host/integration-contracts')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'integrationImplementation') {
+      throw new Error(`${name} must not depend on @host/integration-contracts; only concrete integration packages may sit above the integration foundation boundary.`);
     }
   }
 }

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This document records the canonical HOST runtime stack after HOST-3E and the HOST-4.0 Integration Layer baseline.
+This document records the canonical HOST runtime stack after HOST-3E, the HOST-4E Integration Foundation, and the HOST-4.5 MCP Integration Runtime.
 
-It clarifies how runtime composition, transport translation, application orchestration, and future integrations relate without introducing any new runtime implementation.
+It clarifies how runtime composition, transport translation, application orchestration, and the implemented Integration Layer foundation relate without introducing any concrete third-party integration runtime.
 
 ## Canonical Runtime Stack
 
@@ -13,7 +13,15 @@ Products
 
 -> 
 
-Future Integration Layer
+Integration Layer
+
+-> 
+
+@host/integration-mcp
+
+-> 
+
+@host/integration-contracts
 
 -> 
 
@@ -52,8 +60,7 @@ provider packages
 execution contracts
 ```
 
-The current implemented runtime boundary ends at `@host/runtime-composition`.
-The Integration Layer is now the next architectural boundary above it.
+The current implemented runtime boundary now includes `@host/runtime-composition`, the Integration Layer foundation package `@host/integration-contracts`, and the first concrete integration runtime `@host/integration-mcp`.
 
 ## Runtime Responsibilities
 
@@ -65,18 +72,28 @@ The runtime stack currently owns:
 - transport-neutral application dispatch through `@host/api-host`
 - persistence-backed context orchestration through `@host/context-service`
 
-The future Integration Layer will own:
+The Integration Layer foundation now owns:
 
-- reusable attachment of external systems and operator surfaces
-- integration-specific lifecycle control
-- integration capability discovery
-- product-facing integration assemblies above the runtime edge
+- reusable integration lifecycle contracts
+- integration capability discovery contracts
+- integration configuration validation
+- deterministic integration bootstrap
+- reusable integration registration and health reporting
+
+The first concrete Integration Layer runtime now owns:
+
+- MCP tool registration
+- MCP resource exposure
+- MCP request translation into the runtime composition path
+- deterministic MCP error translation
 
 ## Runtime Boundary Rules
 
 The runtime edge remains frozen around these rules:
 
-- `@host/runtime-composition` is the only approved bootstrap entry point for future integration packages
+- `@host/runtime-composition` is the only approved bootstrap entry point for integration packages
+- `@host/integration-contracts` may depend only on `@host/runtime-composition`
+- `@host/integration-mcp` may depend only on `@host/integration-contracts`
 - transport packages remain below runtime composition
 - application packages remain below transport packages
 - execution and provider packages remain below application packages
@@ -84,12 +101,16 @@ The runtime edge remains frozen around these rules:
 
 ## Request Direction
 
-Future runtime direction:
+Current integration-ready runtime direction:
 
 ```text
 product
   ->
-integration
+integration binding
+  ->
+integration registry / bootstrap
+  ->
+integration-mcp
   ->
 runtime-composition
   ->
@@ -104,4 +125,4 @@ application service
 execution and providers
 ```
 
-This preserves the HOST-3 freezes while making reusable integrations the next architectural boundary for HOST-4.x work.
+This preserves the HOST-3 freezes while proving the Integration Layer with a concrete MCP runtime that still avoids any network listener or product-specific integration.

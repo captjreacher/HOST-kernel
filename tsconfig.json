@@ -23,6 +23,8 @@
     { "path": "./packages/transport-rest" },
     { "path": "./packages/rest-runtime-host" },
     { "path": "./packages/runtime-composition" },
+    { "path": "./packages/integration-contracts" },
+    { "path": "./packages/integration-mcp" },
     { "path": "./packages/context-persistence-filesystem" },
     { "path": "./packages/context-persistence-sqlite" }
   ]

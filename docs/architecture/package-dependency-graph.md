@@ -39,8 +39,12 @@ graph TD
 
   RuntimeHost["@host/rest-runtime-host"]
   RuntimeComposition["@host/runtime-composition"]
-  Integration["Future Integration Layer / HOST-4"]
-  IntegrationPkg["@host/integration-*"]
+
+  subgraph Integration["Integration Layer / HOST-4"]
+  IntegrationContracts["@host/integration-contracts"]
+  IntegrationMcp["@host/integration-mcp"]
+  end
+
   Products["Products"]
 
   KEvents --> KTypes
@@ -103,9 +107,9 @@ graph TD
   RuntimeComposition --> ApiHost
   RuntimeComposition --> Rest
   RuntimeComposition --> RuntimeHost
-  Integration --> IntegrationPkg
-  IntegrationPkg --> RuntimeComposition
-  Products --> Integration
+  IntegrationContracts --> RuntimeComposition
+  IntegrationMcp --> IntegrationContracts
+  Products --> IntegrationMcp
 ```
 
 ## Canonical Layering
@@ -161,9 +165,10 @@ Runtime Edge
 
 ↓
 
-Future Integration Layer
+Integration Layer
 
-@host/integration-*
+@host/integration-contracts
+@host/integration-mcp
 
 ↓
 
@@ -181,8 +186,8 @@ Products
 - Future provider packages must depend on `@host/context-persistence` and must not depend on applications.
 - Application packages must remain above the provider layer and below the Transport Layer.
 - Transport adapter packages must remain above the Application Layer and below the runtime edge.
-- Runtime edge packages must remain above the Transport Layer and below the future Integration Layer.
-- Future integration packages must remain above the runtime edge and below products.
+- Runtime edge packages must remain above the Transport Layer and below the Integration Layer.
+- Integration packages must remain above the runtime edge and below products.
 - Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
 - Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
 - `@host/context-service` may depend only on `@host/context-persistence` and `@host/runtime-contracts`.
@@ -192,7 +197,8 @@ Products
 - `@host/transport-rest` is the first concrete transport translation package and may depend only on `@host/transport-adapter` and `@host/api-host`.
 - `@host/rest-runtime-host` is the first runtime host package and may depend only on `@host/transport-rest` and `@host/api-host`.
 - `@host/runtime-composition` is the canonical bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`.
-- future `@host/integration-*` packages may depend only on `@host/runtime-composition`.
+- `@host/integration-contracts` may depend only on `@host/runtime-composition`.
+- `@host/integration-mcp` may depend only on `@host/integration-contracts`.
 - transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals.
 - runtime edge packages must not introduce framework listeners, service locators, or vendor integrations.
 - integration packages must not bypass `@host/runtime-composition` to depend directly on transport, application, execution, provider, or HOST-1 packages.
@@ -216,8 +222,9 @@ The runtime edge currently contains two implemented package responsibilities:
 - `@host/rest-runtime-host` for injected `ApiHost` composition, reusable request handling, response shaping through `@host/transport-rest`, and deterministic runtime-level fallback errors
 - `@host/runtime-composition` for provider-to-runtime-host bootstrap assembly and lifecycle-oriented runtime composition
 
-The future Integration Layer currently reserves one package responsibility:
+The Integration Layer currently contains one implemented foundation package responsibility and one implemented reference runtime:
 
-- `@host/integration-*` for reusable external integration bindings above runtime composition and below products
+- `@host/integration-contracts` for canonical lifecycle contracts, configuration contracts, integration registration, health reporting, and deterministic integration bootstrap above runtime composition
+- `@host/integration-mcp` for the reference MCP runtime, tool and resource exposure, runtime-path request translation, and deterministic MCP error mapping
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-composition` dependency rules while reserving `@host/integration-*`, `@host/app-`, and `@host/product-` prefixes for future architecture enforcement.
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, `@host/runtime-composition`, `@host/integration-contracts`, and `@host/integration-mcp` dependency rules while still reserving `@host/app-` and `@host/product-` prefixes for future architecture enforcement.

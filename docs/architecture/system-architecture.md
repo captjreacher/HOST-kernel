@@ -75,7 +75,9 @@ CONTEXT is the canonical knowledge plane.
 Roadmap is the planning plane.
 Product repositories are the delivery plane beneath the HOST application boundary.
 The Transport Layer now has `@host/transport-adapter` as its canonical contract package, `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol, and `@host/rest-runtime-host` plus `@host/runtime-composition` as the runtime edge above translation.
-HOST-4.0 now adds the Integration Layer as the next architectural boundary above runtime composition.
+HOST-4.0 adds the Integration Layer as the next architectural boundary above runtime composition.
+HOST-4E now implements that foundation through `@host/integration-contracts`.
+HOST-4.5 validates it with `@host/integration-mcp` as the first concrete reusable integration runtime.
 
 ## Architectural Planes
 
@@ -233,7 +235,8 @@ Runtime Edge
 
 Future Integration Layer
 
-@host/integration-*
+@host/integration-contracts
+@host/integration-mcp
 
 ↓
 
@@ -274,6 +277,8 @@ Ownership boundaries remain unchanged:
 - The Transport Layer owns protocol-specific translation between runtime hosts or integrations and the frozen Application Layer protocol.
 - The Runtime Edge owns bootstrap and host composition above the Transport Layer.
 - The Integration Layer owns reusable external attachment points above runtime composition and below products.
+- `@host/integration-contracts` now provides the canonical registration, configuration, health, and bootstrap base for all future integrations.
+- `@host/integration-mcp` now serves as the reference proof that the Integration Layer can host a real reusable runtime without bypassing runtime composition.
 - Product repositories own implementation and delivery artifacts beneath those shared boundaries.
 
 ## Request Lifecycle
@@ -407,7 +412,11 @@ HOST-3.7 implements `@host/rest-runtime-host` as the first real runtime composit
 
 HOST-3E completes the HOST-3 runtime foundation with `@host/runtime-contracts` for transport-neutral authentication, correlation, and observability contracts plus `@host/runtime-composition` for canonical provider-to-runtime-host bootstrap assembly through dependency injection.
 
-HOST-4.0 introduces the Integration Layer as the next architectural boundary above `@host/runtime-composition`, defining reusable external integration responsibilities without approving any integration package or runtime.
+HOST-4.0 introduces the Integration Layer as the next architectural boundary above `@host/runtime-composition`, defining reusable external integration responsibilities.
+
+HOST-4E implements the Integration Foundation through `@host/integration-contracts`, establishing canonical contracts, registry behavior, configuration validation, and deterministic lifecycle bootstrap.
+
+HOST-4.5 implements `@host/integration-mcp` as the first concrete Integration Layer runtime, proving MCP tools and resources can be exposed through the approved runtime path without introducing a network listener or product-specific integration.
 
 ## Traceability Architecture
 
@@ -478,6 +487,8 @@ Current status:
 - `@host/runtime-contracts` implemented as the shared runtime auth and observability contract package
 - `@host/runtime-composition` implemented as the canonical runtime bootstrap package
 - HOST-4.0 integration architecture baseline established
+- `@host/integration-contracts` implemented as the Integration Foundation package
+- `@host/integration-mcp` implemented as the reference MCP integration runtime
 
 ## Reading Order
 

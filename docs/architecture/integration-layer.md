@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document establishes HOST-4.0 as the architecture baseline for reusable integrations above runtime composition and below products.
+This document records the HOST-4.0 architecture baseline and the HOST-4E implementation foundation for reusable integrations above runtime composition and below products.
 
 The Integration Layer exists to connect external systems, tools, protocols, services, and operator surfaces to the kernel without coupling those concerns into the Application Layer, Execution Layer, provider layer, or HOST-1 kernel packages.
 
@@ -100,27 +100,58 @@ It does not own:
 - browser
 - mobile
 
-These categories are architectural catalogue entries only.
-HOST-4.0 does not create packages or runtime implementations for them.
+These categories remain architectural catalogue entries only.
+HOST-4.5 now validates the AI Integrations category with the first concrete runtime, `@host/integration-mcp`, without expanding into any product-specific integration.
+
+## Canonical Foundation Package
+
+HOST-4E implements the first Integration Layer package:
+
+- `@host/integration-contracts`
+
+It is the canonical base for future integrations and currently defines:
+
+- lifecycle contracts
+- initialization and shutdown contracts
+- health contracts
+- capability discovery contracts
+- configuration contracts
+- dependency injection contracts
+- an integration registry
+- deterministic integration bootstrap
+
+It depends only on:
+
+- `@host/runtime-composition`
+
+HOST-4.5 now implements the first concrete integration package:
+
+- `@host/integration-mcp`
+
+It depends only on:
+
+- `@host/integration-contracts`
 
 ## Transport-Neutral Integration Contract
 
-Future integration packages must implement a transport-neutral contract shape above `@host/runtime-composition`.
+The Integration Layer now freezes a reusable contract shape above `@host/runtime-composition`.
 
-Canonical contract:
+Canonical direction:
 
-```ts
-interface IntegrationBinding<TCapability = unknown, TConfig = unknown> {
-  readonly id: string;
-  readonly category: string;
-  readonly version: string;
-  readonly config: TConfig;
-
-  describeCapabilities(): Promise<readonly TCapability[]>;
-  initialize(): Promise<void>;
-  health(): Promise<{ status: 'healthy' | 'degraded' | 'unhealthy'; details?: Record<string, unknown> }>;
-  shutdown(): Promise<void>;
-}
+```text
+product surface
+  ->
+integration binding
+  ->
+integration registry / bootstrap
+  ->
+@host/runtime-composition
+  ->
+@host/rest-runtime-host
+  ->
+@host/transport-rest
+  ->
+@host/api-host
 ```
 
 Required contract concerns:
@@ -133,30 +164,57 @@ Required contract concerns:
 - dependency injection
 - configuration
 
-The contract is architectural only.
-HOST-4.0 does not freeze runtime signatures, factories, SDK choices, or implementation packages.
+The contract is now implementation-ready through `@host/integration-contracts`.
+HOST-4.5 proves the contract with `@host/integration-mcp` while still avoiding any third-party SDK or listener runtime.
 
-## Composition Rule
+## Integration Registry
 
-The Integration Layer composes the runtime edge instead of replacing it.
+HOST-4.2 now defines a reusable registry capable of:
 
-Canonical direction:
+- registering integrations
+- discovering integrations
+- querying capabilities
+- validating duplicate registrations
+- reporting health
 
-```text
-product surface
-  ->
-integration binding
-  ->
-@host/runtime-composition
-  ->
-@host/rest-runtime-host
-  ->
-@host/transport-rest
-  ->
-@host/api-host
-```
+The registry remains transport-neutral and runtime-neutral.
 
-Equivalent future transports may sit inside the runtime composition chain, but integration packages must still enter through the approved runtime edge rather than binding directly to transport, application, execution, provider, or kernel packages.
+## Integration Bootstrap
+
+HOST-4.3 now defines the canonical bootstrap process for integrations.
+
+Its responsibilities are:
+
+- runtime composition
+- integration initialization
+- deterministic startup ordering
+- deterministic shutdown ordering
+- lifecycle orchestration
+
+It does not assume a framework, server, worker runtime, or scheduler implementation.
+
+## Configuration Contracts
+
+HOST-4.4 now defines reusable configuration contracts for integrations, including:
+
+- configuration schema
+- validation
+- defaults
+- secret references
+- environment overlays
+
+No configuration provider is implemented in HOST-4E.
+
+## Reference Implementation
+
+HOST-4.5 adds `@host/integration-mcp` as the reference implementation of the Integration Layer.
+
+It demonstrates:
+
+- concrete integration registration through the foundation package
+- lifecycle and health composition above runtime composition
+- tool and resource exposure without transport or provider bypass
+- deterministic error translation over the frozen API Host path
 
 ## Dependency Rules
 
@@ -164,6 +222,8 @@ Allowed:
 
 ```text
 integration
+  ->
+integration-contracts
   ->
 runtime-composition
 ```
@@ -215,12 +275,11 @@ Products must not become the shared architectural home for reusable integration 
 
 ## Implementation Status
 
-HOST-4.0 is architecture only.
+HOST-4E makes the Integration Layer implementation-ready through the shared foundation package.
+HOST-4.5 proves that implementation model with `@host/integration-mcp` as the first concrete reusable integration runtime.
 
-This baseline does not approve:
+This baseline still does not approve:
 
-- integration packages
-- MCP implementations
 - REST or GraphQL clients
 - queue or event bus runtimes
 - webhook listeners
