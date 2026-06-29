@@ -12,6 +12,7 @@ graph TD
   KDocuments["@host/kernel-documents"]
   KRepositories["@host/kernel-repositories"]
   KRegistry["@host/kernel-registry"]
+  RuntimeContracts["@host/runtime-contracts"]
   KCore["@host/kernel-core"]
   KApi["@host/kernel-api"]
   end
@@ -29,14 +30,15 @@ graph TD
   subgraph Application["Application Layer / HOST-3"]
   ContextService["@host/context-service"]
   ApiHost["@host/api-host"]
-  AppRuntime["application-runtime\n(conceptual)"]
   end
 
-  subgraph Transport["Transport Layer / HOST-3.4"]
+  subgraph Transport["Transport Layer / HOST-3.x"]
   Adapter["@host/transport-adapter"]
   Rest["@host/transport-rest"]
   end
 
+  RuntimeHost["@host/rest-runtime-host"]
+  RuntimeComposition["@host/runtime-composition"]
   Products["Products"]
 
   KEvents --> KTypes
@@ -55,6 +57,7 @@ graph TD
   KRepositories --> KTypes
   KRegistry --> KTypes
   KRegistry --> KValidation
+  KCore --> RuntimeContracts
   KCore --> KTypes
   KCore --> KEvents
   KCore --> KIdentifiers
@@ -82,14 +85,24 @@ graph TD
   CtxSqliteProvider --> CtxPersistence
   ProviderLayer --> CtxFsProvider
   ProviderLayer --> CtxSqliteProvider
+  ContextService --> RuntimeContracts
   ContextService --> CtxPersistence
+  ApiHost --> RuntimeContracts
   ApiHost --> ContextService
-  AppRuntime --> ApiHost
+  Adapter --> RuntimeContracts
   Adapter --> ApiHost
   Rest --> Adapter
   Rest --> ApiHost
-  Products --> Adapter
-  Products --> Rest
+  RuntimeHost --> Rest
+  RuntimeHost --> ApiHost
+  RuntimeComposition --> RuntimeContracts
+  RuntimeComposition --> CtxPersistence
+  RuntimeComposition --> ContextService
+  RuntimeComposition --> ApiHost
+  RuntimeComposition --> Rest
+  RuntimeComposition --> RuntimeHost
+  Products --> RuntimeHost
+  Products --> RuntimeComposition
 ```
 
 ## Canonical Layering
@@ -98,6 +111,7 @@ graph TD
 Knowledge Plane
 
 kernel-types
+runtime-contracts
 kernel-core
 kernel-taxonomy
 kernel-validation
@@ -127,7 +141,6 @@ Application Layer
 
 @host/context-service
 @host/api-host
-application-runtime
 
 ↓
 
@@ -138,42 +151,57 @@ Transport Layer
 
 ↓
 
+Runtime Edge
+
+@host/rest-runtime-host
+@host/runtime-composition
+
+↓
+
 Products
 ```
 
 ## Frozen Rules
 
 - The graph is intentionally acyclic.
-- `kernel-types` and HOST-1 packages remain independent of execution packages.
+- `kernel-types`, `runtime-contracts`, and HOST-1 packages remain independent of execution packages.
 - `context-runtime` depends downward on HOST-1 only.
 - `context-store` may depend on `context-runtime` but must not be bypassed by future provider packages.
 - `context-persistence` remains the top of the execution plane and the canonical entry point for future provider packages.
 - `@host/context-provider-filesystem` and `@host/context-provider-sqlite` are concrete provider-layer implementations and depend downward only.
 - Future provider packages must depend on `@host/context-persistence` and must not depend on applications.
 - Application packages must remain above the provider layer and below the Transport Layer.
-- Transport adapter packages must remain above the Application Layer and below products.
+- Transport adapter packages must remain above the Application Layer and below the runtime edge.
+- Runtime edge packages must remain above the Transport Layer and below products.
 - Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
 - Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
-- `@host/context-service` is the first implemented HOST-3 package and may depend only on `@host/context-persistence`.
-- `@host/api-host` is the canonical HOST-3 protocol dispatch boundary and may depend only on `@host/context-service`.
+- `@host/context-service` may depend only on `@host/context-persistence` and `@host/runtime-contracts`.
+- `@host/api-host` may depend only on `@host/context-service` and `@host/runtime-contracts`.
 - `@host/api-host` owns the frozen HOST-3.3 operation registry, request envelope, response envelope, error taxonomy, and transaction contract.
-- future transport adapter packages may depend only on `@host/api-host`
-- `@host/transport-adapter` is the sole canonical Transport Layer contract package
-- `@host/transport-rest` is the first concrete transport translation package and may depend only on `@host/transport-adapter` and `@host/api-host`
-- transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals
-- application, execution, and provider packages must not depend upward on transport adapters
+- `@host/transport-adapter` is the sole canonical Transport Layer contract package and may depend only on `@host/api-host` and `@host/runtime-contracts`.
+- `@host/transport-rest` is the first concrete transport translation package and may depend only on `@host/transport-adapter` and `@host/api-host`.
+- `@host/rest-runtime-host` is the first runtime host package and may depend only on `@host/transport-rest` and `@host/api-host`.
+- `@host/runtime-composition` is the canonical bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`.
+- transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals.
+- runtime edge packages must not introduce framework listeners, service locators, or vendor integrations.
+- application, execution, and provider packages must not depend upward on transport or runtime-edge packages.
 
-## HOST-3 Conceptual Responsibilities
+## HOST-3 Responsibilities
 
-The Application Layer baseline currently contains two implemented packages and one conceptual package responsibility:
+The Application Layer baseline currently contains two implemented packages plus one shared runtime contract package responsibility:
 
 - `@host/context-service` for persistence-backed orchestration, transactions, and application-layer error translation
 - `@host/api-host` for canonical API contract handling, operation dispatch, and stable API error translation
-- `application-runtime` for broader composition roots and asynchronous workflow coordination
+- `@host/runtime-contracts` for shared authentication, correlation, request context, logger, metrics, and tracer contracts
 
 The Transport Layer baseline currently contains one implemented contract package and one implemented translation package responsibility:
 
 - `@host/transport-adapter` for canonical adapter contracts, authentication context contracts, correlation and tracing metadata, and deterministic metadata defaults
 - `@host/transport-rest` for stateless REST request and response translation, route registry mapping, query parameter mapping, and deterministic HTTP status translation
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service` and `@host/api-host` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.
+The runtime edge currently contains two implemented package responsibilities:
+
+- `@host/rest-runtime-host` for injected `ApiHost` composition, reusable request handling, response shaping through `@host/transport-rest`, and deterministic runtime-level fallback errors
+- `@host/runtime-composition` for provider-to-runtime-host bootstrap assembly and lifecycle-oriented runtime composition
+
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-composition` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.

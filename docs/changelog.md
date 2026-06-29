@@ -88,6 +88,25 @@ This entry records the first concrete transport implementation package.
 - correlation, request, and tracing metadata now propagate through the REST translation layer
 - the package remains stateless and framework-neutral, with no listener, socket, or server runtime
 
+## HOST-3.7 - REST API Runtime Host
+
+This entry records the first reusable runtime host boundary above the REST transport adapter.
+
+- `@host/rest-runtime-host` is now implemented as the first real runtime boundary composing injected `ApiHost` instances with `@host/transport-rest`
+- the package now exposes a runtime-neutral `handleRestRequest(request)` style handler suitable for future HTTP-capable environments
+- unsupported routes and unexpected injected host failures now translate into deterministic REST-style fallback responses
+- the runtime host remains framework-light, product-neutral, provider-neutral, and injection-based
+
+## HOST-3E - Runtime Composition, Authentication Context & Observability Foundation
+
+This entry records the completion of the remaining HOST-3 runtime infrastructure.
+
+- `@host/runtime-contracts` is now implemented as the shared contract package for authentication context, request correlation, and transport-neutral logger, metrics, and tracer interfaces
+- `@host/api-host` now translates transport metadata into a reusable runtime request context and propagates that context into `@host/context-service`
+- `@host/context-service` is now authorization-ready at the application boundary while the execution layer remains identity-agnostic
+- `@host/runtime-composition` is now implemented as the canonical dependency-injected bootstrap package assembling provider, context service, API host, REST transport, and REST runtime host
+- the canonical bootstrap sequence is now documented and enforced without introducing global state, service locators, framework listeners, authentication vendors, or observability SDKs
+
 ## HOST-2.8A - Context Persistence Boundary Decision
 
 This entry records the HOST-2.8A architectural decision.

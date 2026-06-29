@@ -6,6 +6,7 @@ import type {
   ContextStoreRecord,
   ContextStoreRollbackResult,
 } from '@host/context-service';
+import type { RuntimeObservability } from '../../runtime-contracts/src/index.js';
 
 export const API_HOST_PROTOCOL_VERSION = '1.0.0' as const;
 
@@ -114,6 +115,7 @@ export interface ApiHostServices {
 
 export interface ApiHostOptions {
   readonly services: ApiHostServices;
+  readonly observability?: RuntimeObservability | undefined;
 }
 
 export interface ApiHost {

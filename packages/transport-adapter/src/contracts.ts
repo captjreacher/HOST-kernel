@@ -1,4 +1,9 @@
 import { API_HOST_PROTOCOL_VERSION, type ApiRequest, type ApiResponse } from '@host/api-host';
+import type {
+  RuntimeAuthenticationContext,
+  RuntimeAuthenticationMethod,
+  RuntimeCorrelationContext,
+} from '../../runtime-contracts/src/index.js';
 
 export const TRANSPORT_ADAPTER_CONTRACT_VERSION = '1.0.0' as const;
 export const TRANSPORT_ADAPTER_TARGET_API_PROTOCOL_VERSION = API_HOST_PROTOCOL_VERSION;
@@ -8,26 +13,12 @@ export const DEFAULT_TRANSPORT_CORRELATION_ID = 'transport-correlation-unspecifi
 export const DEFAULT_TRANSPORT_REQUEST_ID = 'transport-request-unspecified' as const;
 
 export type TransportAdapterContractVersion = typeof TRANSPORT_ADAPTER_CONTRACT_VERSION;
-export type TransportAuthenticationMethod = 'anonymous' | 'bearer' | 'session' | 'api-key' | 'mutual-tls' | 'custom';
+export type TransportAuthenticationMethod = RuntimeAuthenticationMethod;
 export type TransportDirection = 'inbound' | 'outbound';
 
-export interface TransportAuthenticationContext {
-  readonly authenticated: boolean;
-  readonly principal: string;
-  readonly subject: string;
-  readonly tenant?: string | undefined;
-  readonly roles: readonly string[];
-  readonly claims: Readonly<Record<string, unknown>>;
-  readonly method: TransportAuthenticationMethod;
-}
+export interface TransportAuthenticationContext extends RuntimeAuthenticationContext {}
 
-export interface TransportTracingMetadata {
-  readonly correlation_id: string;
-  readonly request_id: string;
-  readonly trace_id?: string | undefined;
-  readonly span_id?: string | undefined;
-  readonly timestamp: string;
-}
+export interface TransportTracingMetadata extends RuntimeCorrelationContext {}
 
 export interface TransportMetadata {
   readonly protocol: string;

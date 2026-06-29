@@ -14,13 +14,15 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.10 with the HOST-2 execution layer frozen, the HOST-3 application layer approved, and the HOST-3.4 transport adapter architecture baseline defined.
+Current release: Kernel 1.10 with the HOST-2 execution layer frozen and HOST-3 functionally complete through runtime composition, authentication context contracts, and observability foundations.
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
 
 Application Layer status: `@host/context-service` and `@host/api-host` are implemented as the canonical service and transport-neutral host boundaries for persisted context operations.
 
-Transport Layer status: `@host/transport-adapter` defines the frozen Transport Adapter Contract v`1.0.0`, and `@host/transport-rest` provides the first concrete REST translation package above `@host/api-host`. No web server or listener is present in this repository.
+Transport Layer status: `@host/transport-adapter` defines the frozen Transport Adapter Contract v`1.0.0`, `@host/transport-rest` provides the first concrete REST translation package, and `@host/rest-runtime-host` provides the first runtime-neutral REST handler boundary. No web server or listener is present in this repository.
+
+Runtime Foundation status: `@host/runtime-contracts` defines the shared authentication, correlation, and observability contracts, and `@host/runtime-composition` provides the canonical dependency-injected bootstrap chain from persistence provider to REST runtime host.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -47,6 +49,7 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/kernel-documents` for document registry contracts
 - `packages/kernel-repositories` for repository registry contracts
 - `packages/kernel-events` for canonical runtime events
+- `packages/runtime-contracts` for transport-neutral runtime auth, correlation, and observability contracts
 - `packages/kernel-core` for the composed kernel surface
 - `packages/kernel-api` for the Control Plane runtime API facade
 - `packages/context-runtime` for the executable Context Runtime model
@@ -56,7 +59,10 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/api-host` for the transport-neutral API host boundary over application services
 - `packages/transport-adapter` for the canonical Transport Layer contract package
 - `packages/transport-rest` for the framework-neutral REST translation adapter
+- `packages/rest-runtime-host` for the injected REST runtime host boundary
+- `packages/runtime-composition` for canonical provider-to-runtime-host bootstrap composition
 - `packages/context-persistence-filesystem` for the first concrete filesystem provider-layer adapter
+- `packages/context-persistence-sqlite` for the concrete SQLite provider-layer adapter
 
 The canonical identifier model is documented in [docs/architecture/identifier-service.md](docs/architecture/identifier-service.md).
 
@@ -96,4 +102,5 @@ npm run verify:graph
 - The Kernel API now exposes the Control Plane through the runtime facade in `kernel-api`.
 - The execution layer is frozen as `context-runtime` -> `context-store` -> `context-persistence`, with future adapters required to sit above that boundary.
 - The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` and `@host/api-host` providing the first implemented service and host boundaries for persistence-backed context operations.
-- The Transport Layer now includes `@host/transport-adapter` as the canonical contract package and `@host/transport-rest` as the first reusable REST translation package. Neither package opens sockets or runs a server.
+- The runtime edge now includes `@host/rest-runtime-host`, which composes an injected `ApiHost` with `@host/transport-rest` through a reusable `handleRestRequest(...)` boundary without becoming a framework app.
+- HOST-3E completes the canonical runtime foundation with shared auth and observability contracts in `@host/runtime-contracts` and a DI-first bootstrap package in `@host/runtime-composition`.

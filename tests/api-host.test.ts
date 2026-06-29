@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type {
   ContextQueryResult,
   ContextService,
+  ContextServiceRequestContext,
   ContextServiceResult,
   ContextServiceTransaction,
   ContextStoreCommitResult,
@@ -435,6 +436,82 @@ test('api-host supports dependency injection by dispatching exclusively through 
   if (response.success) {
     assert.equal((response.result as ContextStoreRecord).key, 'context/api/injected/from-injected-service');
   }
+});
+
+test('api-host propagates authentication and correlation context through the application service boundary', async () => {
+  let capturedContext: ContextServiceRequestContext | undefined;
+  const { host } = createMockHost({
+    retrieve: async (key, requestContext) => {
+      capturedContext = requestContext;
+      return serviceSuccess('retrieve', createRecord(`${key}/with-context`));
+    },
+  });
+
+  const response = await handle(
+    host,
+    request({
+      operation: 'context.retrieve',
+      payload: { key: 'context/api/authenticated' },
+      correlation_id: 'COR-CTX-001',
+      request_id: 'REQ-CTX-001',
+      timestamp: '2026-06-29T09:00:00.000Z',
+      metadata: {
+        transport_metadata: {
+          authentication: {
+            authenticated: true,
+            principal: { id: 'principal-ctx', type: 'service' },
+            subject: { id: 'subject-ctx', type: 'user' },
+            tenant: { id: 'tenant-ctx' },
+            roles: ['context-reader'],
+            claims: { scope: 'context:read' },
+            method: 'bearer',
+            metadata: {
+              issuer: 'test-suite',
+              session_id: 'session-ctx',
+              attributes: {
+                source: 'api-host-test',
+              },
+            },
+          },
+          tracing: {
+            correlation_id: 'COR-CTX-001',
+            request_id: 'REQ-CTX-001',
+            trace_id: 'TRACE-CTX-001',
+            span_id: 'SPAN-CTX-001',
+            timestamp: '2026-06-29T09:00:00.000Z',
+          },
+        },
+      },
+    }),
+  );
+
+  assert.equal(response.success, true);
+  assert.deepEqual(capturedContext, {
+    authentication: {
+      authenticated: true,
+      principal: { id: 'principal-ctx', type: 'service' },
+      subject: { id: 'subject-ctx', type: 'user' },
+      tenant: { id: 'tenant-ctx' },
+      roles: ['context-reader'],
+      claims: { scope: 'context:read' },
+      method: 'bearer',
+      metadata: {
+        issuer: 'test-suite',
+        session_id: 'session-ctx',
+        attributes: {
+          source: 'api-host-test',
+        },
+      },
+    },
+    correlation: {
+      correlation_id: 'COR-CTX-001',
+      request_id: 'REQ-CTX-001',
+      trace_id: 'TRACE-CTX-001',
+      span_id: 'SPAN-CTX-001',
+      timestamp: '2026-06-29T09:00:00.000Z',
+    },
+    attributes: {},
+  });
 });
 
 test('api-host evicts transaction handles after rollback and reports finalized lifecycle metadata', async () => {

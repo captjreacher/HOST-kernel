@@ -63,13 +63,20 @@ Application Layer
 
 @host/context-service
 @host/api-host
-application-runtime
 
 -> 
 
 Transport Layer
 
-future transport adapter
+@host/transport-adapter
+@host/transport-rest
+
+-> 
+
+Runtime Edge
+
+@host/rest-runtime-host
+@host/runtime-composition
 
 -> 
 
@@ -77,8 +84,7 @@ Products
 ```
 
 The Application Layer now contains two implemented package boundaries, `@host/context-service` and `@host/api-host`.
-
-`application-runtime` remains conceptual.
+The runtime edge above transport now contains `@host/rest-runtime-host` and the canonical bootstrap package `@host/runtime-composition`.
 
 ## Responsibility Boundaries
 
@@ -103,19 +109,20 @@ Implementation status:
 - depends only on `@host/context-persistence`
 - translates execution-layer failures into deterministic application-layer service errors
 
-### `application-runtime` (conceptual)
+### `@host/runtime-composition`
 
 Purpose:
 
-- act as the application composition root
-- wire approved execution abstractions and provider packages into application services
-- host asynchronous workflow coordination and background processing entry points
+- act as the canonical runtime bootstrap root
+- wire approved persistence providers, application services, API host composition, transport translation, and runtime host handling through dependency injection
+- expose a reusable bootstrap sequence without assuming a framework or global container
 
 Must not:
 
 - change execution-layer contracts
 - push provider semantics upward into application contracts
 - absorb product-specific feature logic
+- become a listener, server, or framework runtime
 
 ### `@host/api-host`
 
@@ -181,6 +188,8 @@ The transport contract depends only on the frozen `@host/api-host` protocol.
 It does not depend on execution packages, provider packages, or HOST-1 internals.
 HOST-3.5 implements this contract boundary concretely as `@host/transport-adapter`.
 HOST-3.6 adds `@host/transport-rest` as the first concrete transport translator over that contract.
+HOST-3.7 adds `@host/rest-runtime-host` as the first injected runtime composition boundary above `@host/transport-rest`.
+HOST-3E adds `@host/runtime-contracts` for shared authentication, correlation, and observability contracts plus `@host/runtime-composition` as the canonical bootstrap layer above `@host/rest-runtime-host`.
 
 Initial transport catalogue:
 
@@ -198,6 +207,12 @@ Authentication boundary:
 - API Host authorizes
 - application services execute
 - execution packages remain identity-agnostic
+
+Runtime request context:
+
+- authentication, subject, tenant, roles, claims, and correlation now propagate through transport metadata into `@host/api-host`
+- `@host/api-host` now passes a transport-neutral request context into `@host/context-service`
+- execution packages remain identity-agnostic because request context stops at the application boundary
 
 ## Dependency Rules
 
@@ -226,9 +241,11 @@ Allowed:
 - Provider packages may depend downward on `@host/context-persistence` only, as frozen by ADR-004.
 - Application packages may depend downward on execution abstractions and may bind approved provider packages at application composition roots.
 - `@host/context-service` is the canonical entry point for persisted context operations and depends only on `@host/context-persistence`.
-- `@host/api-host` is the canonical composition point between adapters and application services and depends only on `@host/context-service`.
+- `@host/context-service` may also depend on `@host/runtime-contracts` for transport-neutral request context and observability composition points.
+- `@host/api-host` is the canonical composition point between adapters and application services and depends only on `@host/context-service` and `@host/runtime-contracts`.
 - future transport adapter packages may depend only on `@host/api-host`
-- `@host/transport-adapter` is the canonical contract package for the Transport Layer and may depend only on `@host/api-host`
+- `@host/transport-adapter` is the canonical contract package for the Transport Layer and may depend only on `@host/api-host` and `@host/runtime-contracts`
+- `@host/runtime-composition` is the canonical runtime bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`
 - Product code may depend on application packages and transport surfaces.
 
 Forbidden:
@@ -241,6 +258,7 @@ Forbidden:
 - no application package may introduce provider awareness into public API contracts
 - no application package may introduce adapter semantics into `@host/api-host` contracts
 - no application or execution package may depend upward on transport adapter packages
+- no runtime bootstrap package may introduce framework listeners, service locators, or vendor observability/authentication implementations
 - no product package may become the architectural home of persistence-backed shared APIs that belong in HOST-3
 
 ## API Boundary
@@ -262,7 +280,7 @@ future adapter
   ->
 @host/api-host (HOST-3 operation dispatch and API translation)
   ->
-@host/context-service (HOST-3 orchestration and policy)
+@host/context-service (HOST-3 orchestration, request context, and policy)
   ->
 @host/context-persistence (HOST-2 execution boundary)
   ->
@@ -308,7 +326,7 @@ The HOST-3 application layer is approved as an architecture baseline.
 
 The `@host/api-host` contract is frozen at protocol version `1.0.0`.
 Future work may add adapters, but adapter work must implement the HOST-3.3 contract rather than redefining it.
-The Transport Layer is approved as a conceptual architecture boundary only.
+The Transport Layer and runtime edge are now implemented through canonical contract, translation, host, and bootstrap packages.
 
 This baseline defines boundaries only.
 It does not approve package creation, business logic, provider selection, or product functionality.

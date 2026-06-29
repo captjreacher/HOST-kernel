@@ -11,6 +11,12 @@ import {
   DEFAULT_TRANSPORT_TIMESTAMP,
   TRANSPORT_ADAPTER_CONTRACT_VERSION,
 } from './contracts.js';
+import {
+  createRuntimeAuthenticationContext,
+  createRuntimeCorrelationContext,
+  type RuntimeAuthenticationContextInput,
+  type RuntimeCorrelationContextInput,
+} from '../../runtime-contracts/src/index.js';
 
 const freeze = <TValue>(value: TValue): TValue => {
   if (!value || typeof value !== "object") {
@@ -27,23 +33,9 @@ const freeze = <TValue>(value: TValue): TValue => {
   return value;
 };
 
-export interface TransportAuthenticationDefaultsInput {
-  readonly authenticated?: boolean | undefined;
-  readonly principal?: string | undefined;
-  readonly subject?: string | undefined;
-  readonly tenant?: string | undefined;
-  readonly roles?: readonly string[] | undefined;
-  readonly claims?: Readonly<Record<string, unknown>> | undefined;
-  readonly method?: TransportAuthenticationContext['method'] | undefined;
-}
+export interface TransportAuthenticationDefaultsInput extends RuntimeAuthenticationContextInput {}
 
-export interface TransportTracingDefaultsInput {
-  readonly correlation_id?: string | undefined;
-  readonly request_id?: string | undefined;
-  readonly trace_id?: string | undefined;
-  readonly span_id?: string | undefined;
-  readonly timestamp?: string | undefined;
-}
+export interface TransportTracingDefaultsInput extends RuntimeCorrelationContextInput {}
 
 export interface TransportMetadataDefaultsInput {
   readonly protocol?: string | undefined;
@@ -57,24 +49,20 @@ export const createTransportAuthenticationContext = (
   input: TransportAuthenticationDefaultsInput = {},
 ): TransportAuthenticationContext =>
   freeze({
-    authenticated: input.authenticated ?? false,
-    principal: input.principal ?? 'anonymous',
-    subject: input.subject ?? 'anonymous',
-    ...(input.tenant ? { tenant: input.tenant } : {}),
-    roles: freeze([...(input.roles ?? [])]),
-    claims: freeze({ ...(input.claims ?? {}) }),
-    method: input.method ?? 'anonymous',
+    ...createRuntimeAuthenticationContext(input),
   });
 
 export const createTransportTracingMetadata = (
   input: TransportTracingDefaultsInput = {},
 ): TransportTracingMetadata =>
   freeze({
-    correlation_id: input.correlation_id ?? DEFAULT_TRANSPORT_CORRELATION_ID,
-    request_id: input.request_id ?? DEFAULT_TRANSPORT_REQUEST_ID,
-    ...(input.trace_id ? { trace_id: input.trace_id } : {}),
-    ...(input.span_id ? { span_id: input.span_id } : {}),
-    timestamp: input.timestamp ?? DEFAULT_TRANSPORT_TIMESTAMP,
+    ...createRuntimeCorrelationContext({
+      correlation_id: input.correlation_id ?? DEFAULT_TRANSPORT_CORRELATION_ID,
+      request_id: input.request_id ?? DEFAULT_TRANSPORT_REQUEST_ID,
+      trace_id: input.trace_id,
+      span_id: input.span_id,
+      timestamp: input.timestamp ?? DEFAULT_TRANSPORT_TIMESTAMP,
+    }),
   });
 
 export const createTransportMetadata = (input: TransportMetadataDefaultsInput = {}): TransportMetadata =>

@@ -9,6 +9,7 @@
     "src/**/*.ts"
   ],
   "references": [
-    { "path": "../api-host" }
+    { "path": "../api-host" },
+    { "path": "../runtime-contracts" }
   ]
 }

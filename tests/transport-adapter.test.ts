@@ -18,10 +18,12 @@ import {
   type TransportResponse,
 } from '../packages/transport-adapter/src/index.ts';
 import { API_HOST_PROTOCOL_VERSION } from '../packages/api-host/src/index.ts';
+import { RUNTIME_CONTRACTS_VERSION } from '../packages/runtime-contracts/src/index.ts';
 
 test('transport-adapter exports the frozen HOST-3.5 contract versions', () => {
   assert.equal(TRANSPORT_ADAPTER_CONTRACT_VERSION, '1.0.0');
   assert.equal(TRANSPORT_ADAPTER_TARGET_API_PROTOCOL_VERSION, API_HOST_PROTOCOL_VERSION);
+  assert.equal(RUNTIME_CONTRACTS_VERSION, '1.0.0');
 });
 
 test('transport-adapter exposes deterministic metadata defaults', () => {
@@ -31,11 +33,14 @@ test('transport-adapter exposes deterministic metadata defaults', () => {
 
   assert.deepEqual(authentication, {
     authenticated: false,
-    principal: 'anonymous',
-    subject: 'anonymous',
+    principal: { id: 'anonymous' },
+    subject: { id: 'anonymous' },
     roles: [],
     claims: {},
     method: 'anonymous',
+    metadata: {
+      attributes: {},
+    },
   });
 
   assert.deepEqual(tracing, {
@@ -106,7 +111,7 @@ test('HOST-3.5 keeps transport-adapter free of framework dependencies and runtim
     dependencies?: Record<string, string>;
   };
 
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host']);
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host', '@host/runtime-contracts']);
 
   const files = [
     path.join(root, 'packages', 'transport-adapter', 'src', 'contracts.ts'),

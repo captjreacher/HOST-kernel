@@ -5,7 +5,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 const isProviderPackage = (packageDir: string) => packageDir === 'context-persistence-filesystem' || packageDir === 'context-persistence-sqlite';
-const isApplicationConsumer = (packageDir: string) => packageDir === 'context-service';
+const isApplicationConsumer = (packageDir: string) => packageDir === 'context-service' || packageDir === 'runtime-composition';
 
 test('HOST-2.4 keeps dependency direction one-way away from HOST-1', () => {
   const root = process.cwd();

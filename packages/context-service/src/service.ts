@@ -16,6 +16,7 @@ import {
 } from '@host/context-persistence';
 import {
   ContextServiceError,
+  type ContextServiceRequestContext,
   type ContextService,
   type ContextServiceOperation,
   type ContextServiceOptions,
@@ -81,9 +82,11 @@ const mapStoreResult = <TValue>(
 
 class DefaultContextServiceTransaction implements ContextServiceTransaction {
   readonly #transaction: ContextStoreTransaction;
+  readonly #requestContext?: ContextServiceRequestContext | undefined;
 
-  constructor(transaction: ContextStoreTransaction) {
+  constructor(transaction: ContextStoreTransaction, requestContext?: ContextServiceRequestContext) {
     this.#transaction = transaction;
+    this.#requestContext = requestContext;
   }
 
   get id(): string {
@@ -98,6 +101,7 @@ class DefaultContextServiceTransaction implements ContextServiceTransaction {
     key: string,
     value: TValue,
     options: ContextStoreWriteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('create', await this.#transaction.create(key, value, options));
   }
@@ -106,19 +110,30 @@ class DefaultContextServiceTransaction implements ContextServiceTransaction {
     key: string,
     value: TValue,
     options: ContextStoreWriteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('update', await this.#transaction.update(key, value, options));
   }
 
-  async delete(key: string, options: ContextStoreDeleteOptions = {}): Promise<ContextServiceResult<ContextStoreRecord>> {
+  async delete(
+    key: string,
+    options: ContextStoreDeleteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord>> {
     return mapStoreResult('delete', await this.#transaction.delete(key, options));
   }
 
-  async retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(key: string): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
+  async retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    key: string,
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('retrieve', await this.#transaction.retrieve<TValue>(key));
   }
 
-  async query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(query: ContextQuery = {}): Promise<ContextServiceResult<ContextQueryResult<TValue>>> {
+  async query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    query: ContextQuery = {},
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextQueryResult<TValue>>> {
     return mapStoreResult('query', await this.#transaction.query<TValue>(query));
   }
 
@@ -142,6 +157,7 @@ class DefaultContextService implements ContextService {
     key: string,
     value: TValue,
     options: ContextStoreWriteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('create', await this.#store.create(key, value, options));
   }
@@ -150,29 +166,40 @@ class DefaultContextService implements ContextService {
     key: string,
     value: TValue,
     options: ContextStoreWriteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('update', await this.#store.update(key, value, options));
   }
 
-  async delete(key: string, options: ContextStoreDeleteOptions = {}): Promise<ContextServiceResult<ContextStoreRecord>> {
+  async delete(
+    key: string,
+    options: ContextStoreDeleteOptions = {},
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord>> {
     return mapStoreResult('delete', await this.#store.delete(key, options));
   }
 
-  async retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(key: string): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
+  async retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    key: string,
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>> {
     return mapStoreResult('retrieve', await this.#store.retrieve<TValue>(key));
   }
 
-  async query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(query: ContextQuery = {}): Promise<ContextServiceResult<ContextQueryResult<TValue>>> {
+  async query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    query: ContextQuery = {},
+    _requestContext?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextQueryResult<TValue>>> {
     return mapStoreResult('query', await this.#store.query<TValue>(query));
   }
 
-  async beginTransaction(): Promise<ContextServiceResult<ContextServiceTransaction>> {
+  async beginTransaction(requestContext?: ContextServiceRequestContext): Promise<ContextServiceResult<ContextServiceTransaction>> {
     const begun = await this.#store.beginTransaction();
     if (!begun.ok) {
       return serviceFailure('begin-transaction', mapStoreError('begin-transaction', begun.error));
     }
 
-    return serviceSuccess('begin-transaction', new DefaultContextServiceTransaction(begun.value));
+    return serviceSuccess('begin-transaction', new DefaultContextServiceTransaction(begun.value, requestContext));
   }
 }
 

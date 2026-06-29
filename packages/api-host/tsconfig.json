@@ -9,6 +9,7 @@
     "src/**/*.ts"
   ],
   "references": [
-    { "path": "../context-service" }
+    { "path": "../context-service" },
+    { "path": "../runtime-contracts" }
   ]
 }

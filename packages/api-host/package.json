@@ -15,7 +15,8 @@
     "dist"
   ],
   "dependencies": {
-    "@host/context-service": "file:../context-service"
+    "@host/context-service": "file:../context-service",
+    "@host/runtime-contracts": "file:../runtime-contracts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json"

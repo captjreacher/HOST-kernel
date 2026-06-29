@@ -21,10 +21,10 @@ test('HOST-3.1 keeps context-service in the application layer with no provider c
   };
 
   assert.equal(packageJson.name, '@host/context-service');
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-persistence']);
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-persistence', '@host/runtime-contracts']);
 
   for (const packageDir of workspacePackages) {
-    if (packageDir === 'context-service' || packageDir === 'api-host') {
+    if (packageDir === 'context-service' || packageDir === 'api-host' || packageDir === 'runtime-composition') {
       continue;
     }
 

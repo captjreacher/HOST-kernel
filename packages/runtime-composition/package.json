@@ -1,5 +1,5 @@
 {
-  "name": "@host/transport-adapter",
+  "name": "@host/runtime-composition",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -16,7 +16,11 @@
   ],
   "dependencies": {
     "@host/api-host": "file:../api-host",
-    "@host/runtime-contracts": "file:../runtime-contracts"
+    "@host/context-persistence": "file:../context-persistence",
+    "@host/context-service": "file:../context-service",
+    "@host/rest-runtime-host": "file:../rest-runtime-host",
+    "@host/runtime-contracts": "file:../runtime-contracts",
+    "@host/transport-rest": "file:../transport-rest"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json"

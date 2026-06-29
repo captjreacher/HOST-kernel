@@ -32,6 +32,8 @@ const providerPackagePrefixes = ['@host/context-provider-'];
 const applicationPackagePrefixes = ['@host/app-', '@host/product-'];
 const applicationPackages = new Set(['@host/context-service', '@host/api-host']);
 const transportPackages = new Set(['@host/transport-adapter', '@host/transport-rest']);
+const runtimeHostPackages = new Set(['@host/rest-runtime-host']);
+const runtimeCompositionPackages = new Set(['@host/runtime-composition']);
 
 const layerRank = {
   knowledge: 0,
@@ -41,6 +43,8 @@ const layerRank = {
   provider: 4,
   application: 5,
   transport: 6,
+  runtimeHost: 7,
+  runtimeComposition: 8,
 };
 
 const allowedDependencies = new Map([
@@ -52,12 +56,28 @@ const allowedProviderDependencies = new Set([
   '@host/context-persistence',
 ]);
 const allowedApplicationDependencies = new Map([
-  ['@host/context-service', new Set(['@host/context-persistence'])],
-  ['@host/api-host', new Set(['@host/context-service'])],
+  ['@host/context-service', new Set(['@host/context-persistence', '@host/runtime-contracts'])],
+  ['@host/api-host', new Set(['@host/context-service', '@host/runtime-contracts'])],
 ]);
 const allowedTransportDependencies = new Map([
-  ['@host/transport-adapter', new Set(['@host/api-host'])],
+  ['@host/transport-adapter', new Set(['@host/api-host', '@host/runtime-contracts'])],
   ['@host/transport-rest', new Set(['@host/api-host', '@host/transport-adapter'])],
+]);
+const allowedRuntimeHostDependencies = new Map([
+  ['@host/rest-runtime-host', new Set(['@host/api-host', '@host/transport-rest'])],
+]);
+const allowedRuntimeCompositionDependencies = new Map([
+  [
+    '@host/runtime-composition',
+    new Set([
+      '@host/api-host',
+      '@host/context-persistence',
+      '@host/context-service',
+      '@host/rest-runtime-host',
+      '@host/runtime-contracts',
+      '@host/transport-rest',
+    ]),
+  ],
 ]);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
@@ -80,6 +100,12 @@ const layerFor = (packageName) => {
   }
   if (transportPackages.has(packageName)) {
     return 'transport';
+  }
+  if (runtimeHostPackages.has(packageName)) {
+    return 'runtimeHost';
+  }
+  if (runtimeCompositionPackages.has(packageName)) {
+    return 'runtimeComposition';
   }
 
   return 'knowledge';
@@ -109,6 +135,24 @@ for (const [name, dependencies] of edges.entries()) {
     for (const dependency of dependencies) {
       if (!allowedTransport.has(dependency)) {
         throw new Error(`${name} may only depend on ${[...allowedTransport].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+  }
+
+  const allowedRuntimeHost = allowedRuntimeHostDependencies.get(name);
+  if (allowedRuntimeHost) {
+    for (const dependency of dependencies) {
+      if (!allowedRuntimeHost.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedRuntimeHost].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+  }
+
+  const allowedRuntimeComposition = allowedRuntimeCompositionDependencies.get(name);
+  if (allowedRuntimeComposition) {
+    for (const dependency of dependencies) {
+      if (!allowedRuntimeComposition.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedRuntimeComposition].sort().join(', ')} but also depends on ${dependency}.`);
       }
     }
   }
@@ -154,15 +198,29 @@ for (const [name, dependencies] of edges.entries()) {
 
   if (name !== executionPackages.persistence && dependencies.includes(executionPackages.persistence)) {
     const dependentLayer = layerFor(name);
-    if (dependentLayer !== 'provider' && dependentLayer !== 'application') {
+    if (dependentLayer !== 'provider' && dependentLayer !== 'application' && dependentLayer !== 'runtimeComposition') {
       throw new Error(`${name} must not depend on ${executionPackages.persistence}; only providers or applications may sit above the persistence boundary.`);
     }
   }
 
   if (name !== '@host/api-host' && dependencies.includes('@host/api-host')) {
     const dependentLayer = layerFor(name);
-    if (dependentLayer !== 'transport') {
-      throw new Error(`${name} must not depend on @host/api-host; only transport packages may sit above the API Host boundary.`);
+    if (dependentLayer !== 'transport' && dependentLayer !== 'runtimeHost' && dependentLayer !== 'runtimeComposition') {
+      throw new Error(`${name} must not depend on @host/api-host; only transport or runtime-host packages may sit above the API Host boundary.`);
+    }
+  }
+
+  if (name !== '@host/transport-rest' && dependencies.includes('@host/transport-rest')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'runtimeHost' && dependentLayer !== 'runtimeComposition') {
+      throw new Error(`${name} must not depend on @host/transport-rest; only runtime-host packages may sit above the REST transport boundary.`);
+    }
+  }
+
+  if (name !== '@host/rest-runtime-host' && dependencies.includes('@host/rest-runtime-host')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'runtimeComposition') {
+      throw new Error(`${name} must not depend on @host/rest-runtime-host; only runtime-composition packages may sit above the REST runtime host boundary.`);
     }
   }
 }

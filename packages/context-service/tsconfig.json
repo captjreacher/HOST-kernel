@@ -9,6 +9,7 @@
     "src/**/*.ts"
   ],
   "references": [
-    { "path": "../context-persistence" }
+    { "path": "../context-persistence" },
+    { "path": "../runtime-contracts" }
   ]
 }

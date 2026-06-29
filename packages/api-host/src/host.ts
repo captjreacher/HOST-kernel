@@ -1,6 +1,7 @@
 import type {
   ContextService,
   ContextServiceError,
+  ContextServiceRequestContext,
   ContextServiceResult,
   ContextServiceTransaction,
   ContextStoreCommitResult,
@@ -29,6 +30,7 @@ import type {
   ContextWritePayload,
 } from './contracts.js';
 import { API_HOST_OPERATION_REGISTRY, API_HOST_PROTOCOL_VERSION } from './contracts.js';
+import { createRuntimeRequestContext, type RuntimeAuthenticationMethod } from '../../runtime-contracts/src/index.js';
 
 const freeze = <TValue>(value: TValue): TValue => {
   if (!value || typeof value !== 'object') {
@@ -53,6 +55,7 @@ const isObject = (value: unknown): value is Record<string, unknown> => Boolean(v
 const isString = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const isInteger = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value);
 const isIsoTimestamp = (value: unknown): value is string => isString(value) && !Number.isNaN(Date.parse(value));
+const isStringArray = (value: unknown): value is readonly string[] => Array.isArray(value) && value.every((item) => typeof item === 'string');
 
 interface CanonicalApiRequest {
   readonly version: string;
@@ -235,6 +238,82 @@ const parseRequest = (request: ApiRequest | unknown): CanonicalApiRequest | unde
   return request as unknown as CanonicalApiRequest;
 };
 
+const requestContextFrom = (request: CanonicalApiRequest): ContextServiceRequestContext => {
+  const metadata = isObject(request.metadata) ? request.metadata : {};
+  const rawTransportMetadata = isObject(metadata.transport_metadata) ? metadata.transport_metadata : {};
+  const rawAuthentication = isObject(rawTransportMetadata.authentication)
+    ? rawTransportMetadata.authentication
+    : isObject(metadata.authentication)
+      ? metadata.authentication
+      : {};
+  const rawAuthenticationMetadata = isObject(rawAuthentication.metadata) ? rawAuthentication.metadata : {};
+  const rawTracing = isObject(rawTransportMetadata.tracing)
+    ? rawTransportMetadata.tracing
+    : isObject(metadata.correlation)
+      ? metadata.correlation
+      : {};
+
+  const principal =
+    isObject(rawAuthentication.principal) && isString(rawAuthentication.principal.id)
+      ? {
+          id: rawAuthentication.principal.id,
+          ...(isString(rawAuthentication.principal.type) ? { type: rawAuthentication.principal.type } : {}),
+        }
+      : isString(rawAuthentication.principal)
+        ? rawAuthentication.principal
+        : 'anonymous';
+
+  const subject =
+    isObject(rawAuthentication.subject) && isString(rawAuthentication.subject.id)
+      ? {
+          id: rawAuthentication.subject.id,
+          ...(isString(rawAuthentication.subject.type) ? { type: rawAuthentication.subject.type } : {}),
+        }
+      : isString(rawAuthentication.subject)
+        ? rawAuthentication.subject
+        : 'anonymous';
+
+  const tenant =
+    isObject(rawAuthentication.tenant) && isString(rawAuthentication.tenant.id)
+      ? { id: rawAuthentication.tenant.id }
+      : isString(rawAuthentication.tenant)
+        ? rawAuthentication.tenant
+        : undefined;
+
+  return createRuntimeRequestContext({
+    authentication: {
+      authenticated: rawAuthentication.authenticated === true,
+      principal,
+      subject,
+      ...(tenant ? { tenant } : {}),
+      roles: isStringArray(rawAuthentication.roles) ? rawAuthentication.roles : [],
+      claims: isObject(rawAuthentication.claims) ? rawAuthentication.claims : {},
+      method: isString(rawAuthentication.method) ? (rawAuthentication.method as RuntimeAuthenticationMethod) : 'anonymous',
+      metadata: {
+        issuer: isString(rawAuthenticationMetadata.issuer) ? rawAuthenticationMetadata.issuer : undefined,
+        authenticated_at: isString(rawAuthenticationMetadata.authenticated_at) ? rawAuthenticationMetadata.authenticated_at : undefined,
+        session_id: isString(rawAuthenticationMetadata.session_id) ? rawAuthenticationMetadata.session_id : undefined,
+        attributes: isObject(rawAuthenticationMetadata.attributes) ? rawAuthenticationMetadata.attributes : {},
+      },
+    },
+    correlation: {
+      correlation_id:
+        (isString(rawTracing.correlation_id) ? rawTracing.correlation_id : undefined) ??
+        request.correlation_id ??
+        'runtime-correlation-unspecified',
+      request_id:
+        (isString(rawTracing.request_id) ? rawTracing.request_id : undefined) ?? request.request_id ?? 'runtime-request-unspecified',
+      trace_id: isString(rawTracing.trace_id) ? rawTracing.trace_id : undefined,
+      span_id: isString(rawTracing.span_id) ? rawTracing.span_id : undefined,
+      timestamp:
+        (isIsoTimestamp(rawTracing.timestamp) ? rawTracing.timestamp : undefined) ??
+        request.timestamp ??
+        '1970-01-01T00:00:00.000Z',
+    },
+    attributes: isObject(metadata.request_attributes) ? metadata.request_attributes : {},
+  });
+};
+
 const transactionMetadata = (transactionId: string, lifecycle: 'active' | 'finalized'): ApiTransactionMetadata =>
   freeze({
     id: transactionId,
@@ -291,41 +370,41 @@ class DefaultApiHost implements ApiHost {
         if (!payload) {
           return errorResponse(request, 'api.invalid_request', 'context.create requires payload { key, value, options? }.');
         }
-        return this.#mapResult(request, await this.#context.create(payload.key, payload.value as never, payload.options ?? {}));
+        return this.#mapResult(request, await this.#context.create(payload.key, payload.value as never, payload.options ?? {}, requestContextFrom(request)));
       }
       case 'context.retrieve': {
         const payload = asRetrievePayload(request.payload);
         if (!payload) {
           return errorResponse(request, 'api.invalid_request', 'context.retrieve requires payload { key }.');
         }
-        return this.#mapResult(request, await this.#context.retrieve(payload.key));
+        return this.#mapResult(request, await this.#context.retrieve(payload.key, requestContextFrom(request)));
       }
       case 'context.update': {
         const payload = asWritePayload(request.payload);
         if (!payload) {
           return errorResponse(request, 'api.invalid_request', 'context.update requires payload { key, value, options? }.');
         }
-        return this.#mapResult(request, await this.#context.update(payload.key, payload.value as never, payload.options ?? {}));
+        return this.#mapResult(request, await this.#context.update(payload.key, payload.value as never, payload.options ?? {}, requestContextFrom(request)));
       }
       case 'context.delete': {
         const payload = asDeletePayload(request.payload);
         if (!payload) {
           return errorResponse(request, 'api.invalid_request', 'context.delete requires payload { key, options? }.');
         }
-        return this.#mapResult(request, await this.#context.delete(payload.key, payload.options ?? {}));
+        return this.#mapResult(request, await this.#context.delete(payload.key, payload.options ?? {}, requestContextFrom(request)));
       }
       case 'context.query': {
         const payload = asQueryPayload(request.query, request.payload);
         if (!payload) {
           return errorResponse(request, 'api.invalid_request', 'context.query requires query {} or payload { query? }.');
         }
-        return this.#mapResult(request, await this.#context.query(payload.query ?? {}));
+        return this.#mapResult(request, await this.#context.query(payload.query ?? {}, requestContextFrom(request)));
       }
       case 'context.transaction.begin': {
         if (request.transaction) {
           return errorResponse(request, 'api.invalid_request', 'context.transaction.begin must not provide a transaction handle.');
         }
-        const begun = await this.#context.beginTransaction();
+        const begun = await this.#context.beginTransaction(requestContextFrom(request));
         if (!begun.ok) {
           return mapContextError(request, begun.error);
         }
@@ -349,7 +428,11 @@ class DefaultApiHost implements ApiHost {
         if (!stored) {
           return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(request, await stored.transaction.create(payload.key, payload.value as never, payload.options ?? {}), stored.metadata);
+        return this.#mapResult(
+          request,
+          await stored.transaction.create(payload.key, payload.value as never, payload.options ?? {}, requestContextFrom(request)),
+          stored.metadata,
+        );
       }
       case 'context.transaction.retrieve': {
         const payload = asRetrievePayload(request.payload);
@@ -360,7 +443,7 @@ class DefaultApiHost implements ApiHost {
         if (!stored) {
           return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(request, await stored.transaction.retrieve(payload.key), stored.metadata);
+        return this.#mapResult(request, await stored.transaction.retrieve(payload.key, requestContextFrom(request)), stored.metadata);
       }
       case 'context.transaction.update': {
         const payload = asWritePayload(request.payload);
@@ -371,7 +454,11 @@ class DefaultApiHost implements ApiHost {
         if (!stored) {
           return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(request, await stored.transaction.update(payload.key, payload.value as never, payload.options ?? {}), stored.metadata);
+        return this.#mapResult(
+          request,
+          await stored.transaction.update(payload.key, payload.value as never, payload.options ?? {}, requestContextFrom(request)),
+          stored.metadata,
+        );
       }
       case 'context.transaction.delete': {
         const payload = asDeletePayload(request.payload);
@@ -382,7 +469,7 @@ class DefaultApiHost implements ApiHost {
         if (!stored) {
           return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(request, await stored.transaction.delete(payload.key, payload.options ?? {}), stored.metadata);
+        return this.#mapResult(request, await stored.transaction.delete(payload.key, payload.options ?? {}, requestContextFrom(request)), stored.metadata);
       }
       case 'context.transaction.query': {
         const payload = asQueryPayload(request.query, request.payload);
@@ -393,7 +480,7 @@ class DefaultApiHost implements ApiHost {
         if (!stored) {
           return errorResponse(request, 'api.not_found', 'Unknown transaction handle.');
         }
-        return this.#mapResult(request, await stored.transaction.query(payload.query ?? {}), stored.metadata);
+        return this.#mapResult(request, await stored.transaction.query(payload.query ?? {}, requestContextFrom(request)), stored.metadata);
       }
       case 'context.transaction.commit': {
         const stored = this.#lookupTransaction(request);

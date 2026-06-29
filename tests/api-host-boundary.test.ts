@@ -21,10 +21,16 @@ test('HOST-3.3 keeps api-host in the application layer with no transport or reve
   };
 
   assert.equal(packageJson.name, '@host/api-host');
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-service']);
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/context-service', '@host/runtime-contracts']);
 
   for (const packageDir of workspacePackages) {
-    if (packageDir === 'api-host' || packageDir === 'transport-adapter' || packageDir === 'transport-rest') {
+    if (
+      packageDir === 'api-host' ||
+      packageDir === 'transport-adapter' ||
+      packageDir === 'transport-rest' ||
+      packageDir === 'rest-runtime-host' ||
+      packageDir === 'runtime-composition'
+    ) {
       continue;
     }
 
@@ -38,7 +44,7 @@ test('HOST-3.3 keeps api-host in the application layer with no transport or reve
     assert.equal(
       dependencies.includes('@host/api-host'),
       false,
-      `${otherPackageJson.name} must not depend on @host/api-host unless it is an approved transport package.`,
+      `${otherPackageJson.name} must not depend on @host/api-host unless it is an approved transport or runtime composition package.`,
     );
   }
 });
@@ -53,7 +59,7 @@ test('HOST-3.5 places transport-adapter in the transport layer with api-host as 
   };
 
   assert.equal(packageJson.name, '@host/transport-adapter');
-  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host']);
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host', '@host/runtime-contracts']);
 });
 
 test('HOST-3.6 places transport-rest in the transport layer with transport-adapter and api-host dependencies only', () => {
@@ -67,6 +73,39 @@ test('HOST-3.6 places transport-rest in the transport layer with transport-adapt
 
   assert.equal(packageJson.name, '@host/transport-rest');
   assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host', '@host/transport-adapter']);
+});
+
+test('HOST-3.7 places rest-runtime-host above transport-rest with injected api-host composition only', () => {
+  const root = process.cwd();
+  const packagesDir = path.join(root, 'packages');
+  const packageJsonPath = path.join(packagesDir, 'rest-runtime-host', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+    dependencies?: Record<string, string>;
+    name: string;
+  };
+
+  assert.equal(packageJson.name, '@host/rest-runtime-host');
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), ['@host/api-host', '@host/transport-rest']);
+});
+
+test('HOST-3E adds runtime-composition as the canonical bootstrap layer above the runtime host', () => {
+  const root = process.cwd();
+  const packagesDir = path.join(root, 'packages');
+  const packageJsonPath = path.join(packagesDir, 'runtime-composition', 'package.json');
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+    dependencies?: Record<string, string>;
+    name: string;
+  };
+
+  assert.equal(packageJson.name, '@host/runtime-composition');
+  assert.deepEqual(Object.keys(packageJson.dependencies ?? {}).sort(), [
+    '@host/api-host',
+    '@host/context-persistence',
+    '@host/context-service',
+    '@host/rest-runtime-host',
+    '@host/runtime-contracts',
+    '@host/transport-rest',
+  ]);
 });
 
 test('HOST-3.3 keeps the api-host package free of transport-specific language', () => {

@@ -73,7 +73,7 @@ HOST is the control plane.
 CONTEXT is the canonical knowledge plane.
 Roadmap is the planning plane.
 Product repositories are the delivery plane beneath the HOST application boundary.
-The Transport Layer now has `@host/transport-adapter` as its canonical contract package and `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol.
+The Transport Layer now has `@host/transport-adapter` as its canonical contract package, `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol, and `@host/rest-runtime-host` plus `@host/runtime-composition` as the runtime edge above translation.
 
 ## Architectural Planes
 
@@ -140,12 +140,13 @@ Responsibilities:
 - composition of execution-layer capabilities
 - application-specific policies
 
-The canonical execution and application stack is frozen as:
+The canonical execution, application, transport, and runtime-edge stack is now:
 
 ```text
 Knowledge Plane
 
 kernel-types
+runtime-contracts
 kernel-core
 kernel-taxonomy
 kernel-validation
@@ -175,13 +176,10 @@ Application Layer
 
 @host/context-service
 @host/api-host
-application-runtime
-
-↓
-
-Transport Layer
-
-future transport adapter
+@host/transport-adapter
+@host/transport-rest
+@host/rest-runtime-host
+@host/runtime-composition
 
 ↓
 
@@ -343,6 +341,10 @@ HOST-3.5 implements `@host/transport-adapter` as the sole canonical Transport La
 
 HOST-3.6 implements `@host/transport-rest` as the first reusable REST translation package, keeping the Transport Layer stateless and server-free while mapping REST semantics into the frozen API Host protocol.
 
+HOST-3.7 implements `@host/rest-runtime-host` as the first real runtime composition boundary above `@host/transport-rest`, suitable for future HTTP-capable environments without becoming a framework app itself.
+
+HOST-3E completes the HOST-3 runtime foundation with `@host/runtime-contracts` for transport-neutral authentication, correlation, and observability contracts plus `@host/runtime-composition` for canonical provider-to-runtime-host bootstrap assembly through dependency injection.
+
 ## Traceability Architecture
 
 ```mermaid
@@ -407,6 +409,9 @@ Current status:
 - Transport Layer baseline established at HOST-3.4
 - `@host/transport-adapter` implemented as the canonical Transport Layer contract package
 - `@host/transport-rest` implemented as the first REST translation package
+- `@host/rest-runtime-host` implemented as the first REST runtime host boundary
+- `@host/runtime-contracts` implemented as the shared runtime auth and observability contract package
+- `@host/runtime-composition` implemented as the canonical runtime bootstrap package
 
 ## Reading Order
 

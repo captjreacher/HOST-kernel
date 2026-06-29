@@ -11,6 +11,7 @@
     { "path": "./packages/kernel-repositories" },
     { "path": "./packages/kernel-registry" },
     { "path": "./packages/kernel-test-utils" },
+    { "path": "./packages/runtime-contracts" },
     { "path": "./packages/kernel-core" },
     { "path": "./packages/kernel-api" },
     { "path": "./packages/context-runtime" },
@@ -20,6 +21,8 @@
     { "path": "./packages/api-host" },
     { "path": "./packages/transport-adapter" },
     { "path": "./packages/transport-rest" },
+    { "path": "./packages/rest-runtime-host" },
+    { "path": "./packages/runtime-composition" },
     { "path": "./packages/context-persistence-filesystem" },
     { "path": "./packages/context-persistence-sqlite" }
   ]

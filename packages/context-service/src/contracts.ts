@@ -9,6 +9,7 @@ import type {
   ContextStoreRollbackResult,
   ContextStoreWriteOptions,
 } from '@host/context-persistence';
+import type { RuntimeObservability, RuntimeRequestContext } from '../../runtime-contracts/src/index.js';
 
 export type ContextServiceOperation =
   | 'create'
@@ -69,23 +70,38 @@ export type ContextServiceResult<TValue> = ContextServiceSuccess<TValue> | Conte
 
 export interface ContextServiceOptions {
   readonly provider: ContextPersistenceProvider;
+  readonly observability?: RuntimeObservability | undefined;
 }
+
+export interface ContextServiceRequestContext extends RuntimeRequestContext {}
 
 export interface ContextService {
   create<TValue extends ContextRuntimeValue>(
     key: string,
     value: TValue,
     options?: ContextStoreWriteOptions,
+    request_context?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
   update<TValue extends ContextRuntimeValue>(
     key: string,
     value: TValue,
     options?: ContextStoreWriteOptions,
+    request_context?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
-  delete(key: string, options?: ContextStoreDeleteOptions): Promise<ContextServiceResult<ContextStoreRecord>>;
-  retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(key: string): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
-  query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(query?: ContextQuery): Promise<ContextServiceResult<ContextQueryResult<TValue>>>;
-  beginTransaction(): Promise<ContextServiceResult<ContextServiceTransaction>>;
+  delete(
+    key: string,
+    options?: ContextStoreDeleteOptions,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord>>;
+  retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    key: string,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
+  query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    query?: ContextQuery,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextQueryResult<TValue>>>;
+  beginTransaction(request_context?: ContextServiceRequestContext): Promise<ContextServiceResult<ContextServiceTransaction>>;
 }
 
 export interface ContextServiceTransaction {
@@ -95,15 +111,27 @@ export interface ContextServiceTransaction {
     key: string,
     value: TValue,
     options?: ContextStoreWriteOptions,
+    request_context?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
   update<TValue extends ContextRuntimeValue>(
     key: string,
     value: TValue,
     options?: ContextStoreWriteOptions,
+    request_context?: ContextServiceRequestContext,
   ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
-  delete(key: string, options?: ContextStoreDeleteOptions): Promise<ContextServiceResult<ContextStoreRecord>>;
-  retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(key: string): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
-  query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(query?: ContextQuery): Promise<ContextServiceResult<ContextQueryResult<TValue>>>;
+  delete(
+    key: string,
+    options?: ContextStoreDeleteOptions,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord>>;
+  retrieve<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    key: string,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextStoreRecord<TValue>>>;
+  query<TValue extends ContextRuntimeValue = ContextRuntimeValue>(
+    query?: ContextQuery,
+    request_context?: ContextServiceRequestContext,
+  ): Promise<ContextServiceResult<ContextQueryResult<TValue>>>;
   commit(): Promise<ContextServiceResult<ContextStoreCommitResult>>;
   rollback(): Promise<ContextServiceResult<ContextStoreRollbackResult>>;
 }
