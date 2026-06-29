@@ -6,6 +6,7 @@ This document records the HOST-3.7 Transport Layer and runtime-edge package base
 
 The Transport Layer sits above the frozen `@host/api-host` protocol and below products or external clients.
 It exists to translate protocol-specific requests and responses without embedding business logic or execution concerns.
+HOST-4.0 now places the future Integration Layer above `@host/runtime-composition`, so reusable external attachments should terminate there rather than on transport packages.
 
 ## Canonical Package
 
@@ -22,6 +23,10 @@ The runtime edge above the Transport Layer now contains:
 
 - `@host/rest-runtime-host`
 - `@host/runtime-composition`
+
+The future Integration Layer above the runtime edge is now reserved for:
+
+- `@host/integration-*`
 
 `@host/transport-adapter` defines:
 
@@ -134,6 +139,10 @@ It must not depend on:
 - authentication vendors
 - observability vendors
 
+Future `@host/integration-*` packages may depend only on:
+
+- `@host/runtime-composition`
+
 ## Responsibilities
 
 The Transport Layer owns:
@@ -153,6 +162,13 @@ The runtime edge above the Transport Layer owns:
 - reusable handler exposure for future HTTP-capable environments
 - runtime-level fallback error shaping outside transport translation
 - canonical runtime bootstrap assembly through dependency injection
+
+The future Integration Layer above the runtime edge owns:
+
+- reusable external attachments
+- integration lifecycle control
+- capability discovery for integrations
+- product-facing integration assemblies
 
 It does not own:
 
@@ -186,6 +202,8 @@ The runtime contracts and composition baselines are frozen at:
 ```text
 Products / External Clients
   ->
+future integration
+  ->
 @host/runtime-composition (bootstrap)
   ->
 @host/rest-runtime-host (runtime host)
@@ -204,3 +222,4 @@ Products / External Clients
 HOST-3.7 introduces a runtime handler only.
 It does not approve or implement a server runtime.
 HOST-3E adds the canonical bootstrap package and shared runtime contracts without introducing a framework, listener, or vendor integration.
+HOST-4.0 adds the next architectural boundary above that bootstrap chain without creating any integration runtime.

@@ -39,6 +39,8 @@ graph TD
 
   RuntimeHost["@host/rest-runtime-host"]
   RuntimeComposition["@host/runtime-composition"]
+  Integration["Future Integration Layer / HOST-4"]
+  IntegrationPkg["@host/integration-*"]
   Products["Products"]
 
   KEvents --> KTypes
@@ -101,8 +103,9 @@ graph TD
   RuntimeComposition --> ApiHost
   RuntimeComposition --> Rest
   RuntimeComposition --> RuntimeHost
-  Products --> RuntimeHost
-  Products --> RuntimeComposition
+  Integration --> IntegrationPkg
+  IntegrationPkg --> RuntimeComposition
+  Products --> Integration
 ```
 
 ## Canonical Layering
@@ -158,6 +161,12 @@ Runtime Edge
 
 ↓
 
+Future Integration Layer
+
+@host/integration-*
+
+↓
+
 Products
 ```
 
@@ -172,7 +181,8 @@ Products
 - Future provider packages must depend on `@host/context-persistence` and must not depend on applications.
 - Application packages must remain above the provider layer and below the Transport Layer.
 - Transport adapter packages must remain above the Application Layer and below the runtime edge.
-- Runtime edge packages must remain above the Transport Layer and below products.
+- Runtime edge packages must remain above the Transport Layer and below the future Integration Layer.
+- Future integration packages must remain above the runtime edge and below products.
 - Application packages may compose execution abstractions and bind approved provider packages only at application composition roots.
 - Persistence-backed APIs begin in the Application Layer and must not be introduced into `kernel-api`.
 - `@host/context-service` may depend only on `@host/context-persistence` and `@host/runtime-contracts`.
@@ -182,11 +192,13 @@ Products
 - `@host/transport-rest` is the first concrete transport translation package and may depend only on `@host/transport-adapter` and `@host/api-host`.
 - `@host/rest-runtime-host` is the first runtime host package and may depend only on `@host/transport-rest` and `@host/api-host`.
 - `@host/runtime-composition` is the canonical bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`.
+- future `@host/integration-*` packages may depend only on `@host/runtime-composition`.
 - transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals.
 - runtime edge packages must not introduce framework listeners, service locators, or vendor integrations.
-- application, execution, and provider packages must not depend upward on transport or runtime-edge packages.
+- integration packages must not bypass `@host/runtime-composition` to depend directly on transport, application, execution, provider, or HOST-1 packages.
+- application, execution, and provider packages must not depend upward on transport, runtime-edge, or integration packages.
 
-## HOST-3 Responsibilities
+## HOST Responsibilities
 
 The Application Layer baseline currently contains two implemented packages plus one shared runtime contract package responsibility:
 
@@ -204,4 +216,8 @@ The runtime edge currently contains two implemented package responsibilities:
 - `@host/rest-runtime-host` for injected `ApiHost` composition, reusable request handling, response shaping through `@host/transport-rest`, and deterministic runtime-level fallback errors
 - `@host/runtime-composition` for provider-to-runtime-host bootstrap assembly and lifecycle-oriented runtime composition
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-composition` dependency rules and still reserves `@host/app-` and `@host/product-` prefixes for future HOST-3 package enforcement.
+The future Integration Layer currently reserves one package responsibility:
+
+- `@host/integration-*` for reusable external integration bindings above runtime composition and below products
+
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-composition` dependency rules while reserving `@host/integration-*`, `@host/app-`, and `@host/product-` prefixes for future architecture enforcement.

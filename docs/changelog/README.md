@@ -2,6 +2,7 @@
 
 ## Entries
 
+- [HOST-4.0](HOST-4.0.md)
 - [HOST-3E](HOST-3E.md)
 - [HOST-3.7](HOST-3.7.md)
 - [HOST-3.6](HOST-3.6.md)

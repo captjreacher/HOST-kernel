@@ -6,7 +6,7 @@
 | --- | --- |
 | Originating Objective | OBJ-006 |
 | Status | Governance Baseline v1.0 |
-| Version | 1.9 |
+| Version | 1.10 |
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](docs/constitution/ecosystem-constitution.md) |
@@ -14,7 +14,7 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.10 with the HOST-2 execution layer frozen and HOST-3 functionally complete through runtime composition, authentication context contracts, and observability foundations.
+Current release: Kernel 1.10 with the HOST-2 execution layer frozen, HOST-3 functionally complete through runtime composition, and HOST-4.0 defined as the architecture baseline for the future Integration Layer.
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
 
@@ -23,6 +23,8 @@ Application Layer status: `@host/context-service` and `@host/api-host` are imple
 Transport Layer status: `@host/transport-adapter` defines the frozen Transport Adapter Contract v`1.0.0`, `@host/transport-rest` provides the first concrete REST translation package, and `@host/rest-runtime-host` provides the first runtime-neutral REST handler boundary. No web server or listener is present in this repository.
 
 Runtime Foundation status: `@host/runtime-contracts` defines the shared authentication, correlation, and observability contracts, and `@host/runtime-composition` provides the canonical dependency-injected bootstrap chain from persistence provider to REST runtime host.
+
+Integration Layer status: HOST-4.0 establishes the architectural boundary for reusable integrations above `@host/runtime-composition` and below products. No integration packages or external runtime implementations are introduced in this repository.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -89,7 +91,10 @@ npm run verify:graph
 - [docs/architecture/execution-layer.md](docs/architecture/execution-layer.md)
 - [docs/architecture/application-layer.md](docs/architecture/application-layer.md)
 - [docs/architecture/transport-layer.md](docs/architecture/transport-layer.md)
+- [docs/architecture/runtime-architecture.md](docs/architecture/runtime-architecture.md)
+- [docs/architecture/integration-layer.md](docs/architecture/integration-layer.md)
 - [docs/architecture/ADR-007-transport-adapter-architecture-baseline.md](docs/architecture/ADR-007-transport-adapter-architecture-baseline.md)
+- [docs/architecture/ADR-008-integration-layer-architecture-baseline.md](docs/architecture/ADR-008-integration-layer-architecture-baseline.md)
 - [docs/architecture/ADR-004-execution-layer-architecture-baseline.md](docs/architecture/ADR-004-execution-layer-architecture-baseline.md)
 - [docs/architecture/ADR-006-application-layer-architecture-baseline.md](docs/architecture/ADR-006-application-layer-architecture-baseline.md)
 - [docs/changelog/README.md](docs/changelog/README.md)
@@ -104,3 +109,4 @@ npm run verify:graph
 - The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` and `@host/api-host` providing the first implemented service and host boundaries for persistence-backed context operations.
 - The runtime edge now includes `@host/rest-runtime-host`, which composes an injected `ApiHost` with `@host/transport-rest` through a reusable `handleRestRequest(...)` boundary without becoming a framework app.
 - HOST-3E completes the canonical runtime foundation with shared auth and observability contracts in `@host/runtime-contracts` and a DI-first bootstrap package in `@host/runtime-composition`.
+- HOST-4.0 defines the Integration Layer as the next architectural boundary above `@host/runtime-composition`, reserving reusable external integration concerns for future work without creating integration packages in this sprint.

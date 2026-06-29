@@ -10,7 +10,7 @@
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](../constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md), [ADR-005](ADR-005-context-persistence-api-boundary.md), [ADR-006](ADR-006-application-layer-architecture-baseline.md), [ADR-007](ADR-007-transport-adapter-architecture-baseline.md), [Application Layer Architecture](application-layer.md) |
+| Related documents | [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [OBJ-003](../services/registry-service-specification.md), [OBJ-004](../context/context-domain-model.md), [OBJ-005](../lifecycle/ecosystem-state-machine.md), [docs/changelog.md](../changelog.md), [ADR-001](ADR-001-ecosystem-taxonomy-and-numbering.md), [ADR-002](ADR-002-host-kernel-operating-model.md), [ADR-004](ADR-004-execution-layer-architecture-baseline.md), [ADR-005](ADR-005-context-persistence-api-boundary.md), [ADR-006](ADR-006-application-layer-architecture-baseline.md), [ADR-007](ADR-007-transport-adapter-architecture-baseline.md), [ADR-008](ADR-008-integration-layer-architecture-baseline.md), [Application Layer Architecture](application-layer.md), [Transport Layer Architecture](transport-layer.md), [Runtime Architecture](runtime-architecture.md), [Integration Layer Architecture](integration-layer.md) |
 
 ## Executive Overview
 
@@ -18,14 +18,15 @@ HOST is the constitutional control layer for the ecosystem.
 
 It exists to ensure that governance, planning, knowledge, and execution all share the same canonical vocabulary, ownership boundaries, and traceability rules before implementation begins.
 
-The system architecture does not introduce new governance rules. It explains how the approved governance baseline fits together as a complete ecosystem.
+The system architecture does not introduce new governance rules.
+It explains how the approved governance baseline fits together as a complete ecosystem.
 
 At a high level:
 
 - HOST governs the ecosystem and defines the control layer.
 - CONTEXT stores canonical knowledge, evidence, and relationships.
 - Roadmap sequences approved work into planning objects.
-- Product repositories implement approved changes through application and delivery surfaces that sit below the HOST-controlled architecture layers.
+- Product repositories implement approved changes through delivery surfaces that sit below the HOST-controlled architecture layers.
 - External services provide runtime and integration capabilities around the ecosystem.
 
 ## Ecosystem Architecture
@@ -74,6 +75,7 @@ CONTEXT is the canonical knowledge plane.
 Roadmap is the planning plane.
 Product repositories are the delivery plane beneath the HOST application boundary.
 The Transport Layer now has `@host/transport-adapter` as its canonical contract package, `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol, and `@host/rest-runtime-host` plus `@host/runtime-composition` as the runtime edge above translation.
+HOST-4.0 now adds the Integration Layer as the next architectural boundary above runtime composition.
 
 ## Architectural Planes
 
@@ -136,11 +138,47 @@ Responsibilities:
 - orchestration
 - asynchronous workflows
 - persistence-backed APIs
-- external adapter boundaries
-- composition of execution-layer capabilities
 - application-specific policies
 
-The canonical execution, application, transport, and runtime-edge stack is now:
+### Transport Layer
+
+Owned by HOST transport architecture.
+
+Responsibilities:
+
+- protocol translation
+- authentication hand-off
+- serialization
+- deserialization
+- transport metadata propagation
+
+### Runtime Edge
+
+Owned by HOST runtime composition architecture.
+
+Responsibilities:
+
+- runtime bootstrap
+- runtime host composition
+- dependency-injected assembly
+
+### Integration Layer
+
+Owned by HOST integration architecture.
+
+Responsibilities:
+
+- external system adapters
+- AI tool adapters
+- MCP server composition
+- event consumers and publishers
+- message brokers
+- webhooks
+- schedulers
+- workflow triggers
+- reusable product-facing integrations
+
+The canonical execution, application, transport, runtime-edge, and future integration stack is now:
 
 ```text
 Knowledge Plane
@@ -176,17 +214,33 @@ Application Layer
 
 @host/context-service
 @host/api-host
+
+↓
+
+Transport Layer
+
 @host/transport-adapter
 @host/transport-rest
+
+↓
+
+Runtime Edge
+
 @host/rest-runtime-host
 @host/runtime-composition
+
+↓
+
+Future Integration Layer
+
+@host/integration-*
 
 ↓
 
 Products
 ```
 
-Product repositories remain the implementation and delivery plane for product code, but they do not own the Knowledge Plane, Execution Layer, provider layer, Application Layer package boundaries, or the conceptual Transport Layer boundary defined above.
+Product repositories remain the implementation and delivery plane for product code, but they do not own the Knowledge Plane, Execution Layer, provider layer, Application Layer package boundaries, Transport Layer package boundaries, runtime-edge package boundaries, or the future Integration Layer package boundary.
 
 ## Repository Interaction Model
 
@@ -217,8 +271,10 @@ Ownership boundaries remain unchanged:
 - CONTEXT owns canonical meaning and evidence.
 - Roadmap owns sequencing and commitments.
 - HOST application architecture owns shared orchestration, persistence-backed APIs, and the frozen API Host protocol boundary above the execution stack.
-- The Transport Layer owns protocol-specific translation between products or external callers and the frozen Application Layer protocol.
-- Product repositories own implementation and delivery artifacts beneath that shared application boundary.
+- The Transport Layer owns protocol-specific translation between runtime hosts or integrations and the frozen Application Layer protocol.
+- The Runtime Edge owns bootstrap and host composition above the Transport Layer.
+- The Integration Layer owns reusable external attachment points above runtime composition and below products.
+- Product repositories own implementation and delivery artifacts beneath those shared boundaries.
 
 ## Request Lifecycle
 
@@ -287,9 +343,11 @@ flowchart TB
     CTX4["Context"]
     RDM4["Roadmap"]
     PRD2["Products"]
-    INT["Integrations"]
-    QUE["Queues"]
-    EVT["Events"]
+    INT["Integration Layer"]
+    RCOMP["Runtime Composition"]
+    TRN["Transport Layer"]
+    APP["Application Layer"]
+    EXE["Execution Layer"]
     NOT["Notifications"]
 
     OPERATOR --> KERNEL
@@ -299,16 +357,18 @@ flowchart TB
     KERNEL --> RDM4
     KERNEL --> PRD2
     PRD2 --> INT
-    INT --> QUE
-    QUE --> EVT
-    EVT --> NOT
+    INT --> RCOMP
+    RCOMP --> TRN
+    TRN --> APP
+    APP --> EXE
+    EXE --> NOT
     NOT --> OPERATOR
     NOT --> AGENT
 ```
 
 This is a conceptual runtime view only.
 
-It shows how operator interactions, AI sessions, registry access, context updates, planning activity, product execution, and integrations relate to each other.
+It shows how operator interactions, AI sessions, registry access, context updates, planning activity, product execution, runtime composition, and integrations relate to each other.
 
 No implementation detail is implied by the diagram.
 
@@ -317,6 +377,8 @@ The executable Context Runtime now sits behind a canonical storage boundary pack
 - `@host/context-runtime` owns immutable runtime values and deterministic validation for the Context model
 - `@host/context-store` owns storage contracts, snapshots, transactions, and optimistic versioning semantics
 - `@host/context-persistence` owns provider registration, lifecycle, capability discovery, and health reporting
+- `@host/runtime-composition` owns canonical runtime bootstrap above transport and application composition
+- the future Integration Layer owns reusable external attachments above runtime composition
 
 No concrete persistence technology is selected inside the execution plane.
 
@@ -327,7 +389,7 @@ HOST-2.5 introduces the first concrete provider-layer implementation as a filesy
 HOST-2.8A further clarifies that persistence-backed API endpoints do not belong in HOST-1.
 The existing `kernel-api` context endpoints remain runtime-only, while persistence-backed transports are deferred to a future execution/application boundary according to [ADR-005](ADR-005-context-persistence-api-boundary.md).
 
-HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, API hosting, and application-specific policies begin without altering HOST-1 or HOST-2 contracts. See [Application Layer Architecture](application-layer.md) and [ADR-006](ADR-006-application-layer-architecture-baseline.md).
+HOST-3.0 establishes that future boundary as the Application Layer, where orchestration, asynchronous workflows, persistence-backed APIs, API hosting, and application-specific policies begin without altering HOST-1 or HOST-2 contracts.
 
 HOST-3.1 implements `@host/context-service` as the canonical persisted context service boundary above the execution stack.
 
@@ -344,6 +406,8 @@ HOST-3.6 implements `@host/transport-rest` as the first reusable REST translatio
 HOST-3.7 implements `@host/rest-runtime-host` as the first real runtime composition boundary above `@host/transport-rest`, suitable for future HTTP-capable environments without becoming a framework app itself.
 
 HOST-3E completes the HOST-3 runtime foundation with `@host/runtime-contracts` for transport-neutral authentication, correlation, and observability contracts plus `@host/runtime-composition` for canonical provider-to-runtime-host bootstrap assembly through dependency injection.
+
+HOST-4.0 introduces the Integration Layer as the next architectural boundary above `@host/runtime-composition`, defining reusable external integration responsibilities without approving any integration package or runtime.
 
 ## Traceability Architecture
 
@@ -381,7 +445,7 @@ Recommended sequence:
 1. HOST-1 Registry Service
 2. HOST-2 Objective Engine
 3. HOST-3 Application Layer
-4. HOST-4 Roadmap Engine
+4. HOST-4 Integration Layer
 5. HOST-5 Orchestration Engine
 6. HOST-6 Operator Console
 
@@ -390,11 +454,12 @@ Dependencies:
 - HOST-1 depends on the canonical taxonomy, kernel operating model, and registry specification.
 - HOST-2 depends on registry records and objective allocation rules.
 - HOST-3 depends on the frozen execution/provider stack and the HOST-1/HOST-2 boundary decisions.
-- HOST-4 depends on planning objects and governance input.
+- HOST-4 depends on the frozen runtime edge and the HOST-3 layering decisions.
 - HOST-5 depends on the control, knowledge, and planning planes being stable.
 - HOST-6 depends on the previous services being available as a coherent operator surface.
 
-These are architectural sequencing labels only. They do not define delivery scope.
+These are architectural sequencing labels only.
+They do not define delivery scope.
 
 Current status:
 
@@ -412,6 +477,7 @@ Current status:
 - `@host/rest-runtime-host` implemented as the first REST runtime host boundary
 - `@host/runtime-contracts` implemented as the shared runtime auth and observability contract package
 - `@host/runtime-composition` implemented as the canonical runtime bootstrap package
+- HOST-4.0 integration architecture baseline established
 
 ## Reading Order
 
@@ -424,7 +490,9 @@ Read the ecosystem in this order:
 5. [OBJ-003 - Registry Service Specification](../services/registry-service-specification.md)
 6. [OBJ-004 - Context Domain Model Specification](../context/context-domain-model.md)
 7. [OBJ-005 - Ecosystem State Machine](../lifecycle/ecosystem-state-machine.md)
-8. Implementation artifacts
+8. [Runtime Architecture](runtime-architecture.md)
+9. [Integration Layer Architecture](integration-layer.md)
+10. Implementation artifacts
 
 ## Validation
 
@@ -448,3 +516,5 @@ Architecture Baseline v1.0 - Approved
 Execution Layer Baseline v1.0 - Frozen
 
 Application Layer Baseline v1.0 - Approved
+
+Integration Layer Baseline v1.0 - Approved

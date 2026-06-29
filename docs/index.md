@@ -12,7 +12,7 @@ This index is the onboarding map for the HOST governance framework.
 | Owner | HOST |
 | Last reviewed | 2026-06-29 |
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
-| Related documents | [OBJ-001](taxonomy/taxonomy-registry.md), [OBJ-002](kernel/operating-model.md), [HOST-0](architecture/system-architecture.md), [OBJ-003](services/registry-service-specification.md), [OBJ-004](context/context-domain-model.md), [OBJ-005](lifecycle/ecosystem-state-machine.md), [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md), [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md), [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) |
+| Related documents | [OBJ-001](taxonomy/taxonomy-registry.md), [OBJ-002](kernel/operating-model.md), [HOST-0](architecture/system-architecture.md), [OBJ-003](services/registry-service-specification.md), [OBJ-004](context/context-domain-model.md), [OBJ-005](lifecycle/ecosystem-state-machine.md), [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md), [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md), [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md), [ADR-008](architecture/ADR-008-integration-layer-architecture-baseline.md) |
 
 ## Start Here
 
@@ -56,9 +56,12 @@ This index is the onboarding map for the HOST governance framework.
 | [kernel API architecture](architecture/kernel-api.md) | Runtime facade and endpoint constraints |
 | [application layer architecture](architecture/application-layer.md) | HOST-3 boundary for orchestration, persistence-backed APIs, runtime request context propagation, and the frozen API Host |
 | [transport layer architecture](architecture/transport-layer.md) | Canonical Transport Layer and runtime-edge packages, including runtime contracts and bootstrap composition above the frozen API Host protocol |
+| [runtime architecture](architecture/runtime-architecture.md) | Canonical runtime composition stack from products through runtime composition, transport, application, and execution layers |
+| [integration layer architecture](architecture/integration-layer.md) | HOST-4 boundary for reusable external integrations above runtime composition and below products |
 | [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md) | Boundary between HOST-1 runtime context APIs and future persistence-backed application APIs |
 | [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) | Application Layer baseline and dependency rules for HOST-3 |
 | [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) | Transport Adapter Layer baseline and dependency rules above the frozen API Host protocol |
+| [ADR-008](architecture/ADR-008-integration-layer-architecture-baseline.md) | Integration Layer baseline and dependency rules above runtime composition |
 
 ## Recommended Reading Order
 

@@ -34,6 +34,7 @@ const applicationPackages = new Set(['@host/context-service', '@host/api-host'])
 const transportPackages = new Set(['@host/transport-adapter', '@host/transport-rest']);
 const runtimeHostPackages = new Set(['@host/rest-runtime-host']);
 const runtimeCompositionPackages = new Set(['@host/runtime-composition']);
+const integrationPackagePrefixes = ['@host/integration-'];
 
 const layerRank = {
   knowledge: 0,
@@ -45,6 +46,7 @@ const layerRank = {
   transport: 6,
   runtimeHost: 7,
   runtimeComposition: 8,
+  integration: 9,
 };
 
 const allowedDependencies = new Map([
@@ -79,6 +81,7 @@ const allowedRuntimeCompositionDependencies = new Map([
     ]),
   ],
 ]);
+const allowedIntegrationDependencies = new Set(['@host/runtime-composition']);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
 
@@ -106,6 +109,9 @@ const layerFor = (packageName) => {
   }
   if (runtimeCompositionPackages.has(packageName)) {
     return 'runtimeComposition';
+  }
+  if (startsWithAny(packageName, integrationPackagePrefixes)) {
+    return 'integration';
   }
 
   return 'knowledge';
@@ -179,6 +185,18 @@ for (const [name, dependencies] of edges.entries()) {
       throw new Error(`${name} must not depend on application packages.`);
     }
   }
+
+  if (packageLayer === 'integration') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/runtime-composition')) {
+      throw new Error(`${name} must depend on @host/runtime-composition as the canonical runtime bootstrap entry point.`);
+    }
+  }
 }
 
 for (const [name, dependencies] of edges.entries()) {
@@ -221,6 +239,13 @@ for (const [name, dependencies] of edges.entries()) {
     const dependentLayer = layerFor(name);
     if (dependentLayer !== 'runtimeComposition') {
       throw new Error(`${name} must not depend on @host/rest-runtime-host; only runtime-composition packages may sit above the REST runtime host boundary.`);
+    }
+  }
+
+  if (name !== '@host/runtime-composition' && dependencies.includes('@host/runtime-composition')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'integration') {
+      throw new Error(`${name} must not depend on @host/runtime-composition; only integration packages may sit above the runtime composition boundary inside the workspace graph.`);
     }
   }
 }

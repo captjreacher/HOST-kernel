@@ -12,6 +12,17 @@
 | Constitution | [OBJ-000](constitution/ecosystem-constitution.md) |
 | Related documents | [README](../README.md), [docs/index.md](index.md), [docs/constitution/ecosystem-constitution.md](constitution/ecosystem-constitution.md), [docs/architecture/system-architecture.md](architecture/system-architecture.md) |
 
+## HOST-4.0 - Integration Layer Architecture Baseline
+
+This entry records the HOST-4.0 architecture baseline for reusable external integrations.
+
+- the Integration Layer is now defined as the boundary above `@host/runtime-composition` and below products
+- canonical integration responsibilities now include external system adapters, AI tool adapters, MCP servers, event consumers and publishers, message brokers, third-party APIs, webhooks, schedulers, workflow triggers, and human-facing surfaces
+- the first approved integration catalogue is now documented as API integrations, AI integrations, messaging, automation, and human interfaces
+- the future integration contract is now documented around capability discovery, lifecycle, initialization, health, shutdown, dependency injection, and configuration
+- dependency rules now reserve future `@host/integration-*` packages above runtime composition while forbidding direct integration dependencies on transport, application, execution, provider, or HOST-1 kernel packages
+- ADR-008 records the baseline without creating integration packages or implementing runtime integrations
+
 ## HOST-3.0 - Application Layer Architecture Baseline
 
 This entry records the HOST-3.0 architecture baseline.

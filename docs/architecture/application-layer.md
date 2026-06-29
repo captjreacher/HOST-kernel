@@ -80,11 +80,18 @@ Runtime Edge
 
 -> 
 
+Future Integration Layer
+
+@host/integration-*
+
+-> 
+
 Products
 ```
 
 The Application Layer now contains two implemented package boundaries, `@host/context-service` and `@host/api-host`.
 The runtime edge above transport now contains `@host/rest-runtime-host` and the canonical bootstrap package `@host/runtime-composition`.
+HOST-4.0 now establishes the future Integration Layer above `@host/runtime-composition`, keeping reusable external integration logic out of HOST-3 packages.
 
 ## Responsibility Boundaries
 
@@ -190,6 +197,7 @@ HOST-3.5 implements this contract boundary concretely as `@host/transport-adapte
 HOST-3.6 adds `@host/transport-rest` as the first concrete transport translator over that contract.
 HOST-3.7 adds `@host/rest-runtime-host` as the first injected runtime composition boundary above `@host/transport-rest`.
 HOST-3E adds `@host/runtime-contracts` for shared authentication, correlation, and observability contracts plus `@host/runtime-composition` as the canonical bootstrap layer above `@host/rest-runtime-host`.
+HOST-4.0 reserves `@host/integration-*` above that runtime edge for reusable external integration concerns.
 
 Initial transport catalogue:
 
@@ -231,6 +239,10 @@ Application Layer
   ->
 Transport Layer
   ->
+Runtime Edge
+  ->
+Future Integration Layer
+  ->
 Products
 ```
 
@@ -246,20 +258,22 @@ Allowed:
 - future transport adapter packages may depend only on `@host/api-host`
 - `@host/transport-adapter` is the canonical contract package for the Transport Layer and may depend only on `@host/api-host` and `@host/runtime-contracts`
 - `@host/runtime-composition` is the canonical runtime bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`
-- Product code may depend on application packages and transport surfaces.
+- future `@host/integration-*` packages may depend only on `@host/runtime-composition`
+- Product code may depend on application packages, transport surfaces, runtime composition, and future integration packages according to the approved layer boundary.
 
 Forbidden:
 
-- no HOST-1 package may depend on HOST-2, HOST-3, providers, or products
-- no execution package may depend on applications or products
-- no provider package may depend on applications or products
+- no HOST-1 package may depend on HOST-2, HOST-3, providers, products, or integrations
+- no execution package may depend on applications, runtime edge packages, integrations, or products
+- no provider package may depend on applications, runtime edge packages, integrations, or products
 - no transport adapter package may depend on execution packages, provider packages, or HOST-1 internals
 - no application package may redefine kernel concepts, taxonomy, runtime contracts, or provider contracts
 - no application package may introduce provider awareness into public API contracts
 - no application package may introduce adapter semantics into `@host/api-host` contracts
 - no application or execution package may depend upward on transport adapter packages
+- no application package may depend upward on integration packages
 - no runtime bootstrap package may introduce framework listeners, service locators, or vendor observability/authentication implementations
-- no product package may become the architectural home of persistence-backed shared APIs that belong in HOST-3
+- no product package may become the architectural home of persistence-backed shared APIs or reusable external integrations that belong in HOST
 
 ## API Boundary
 
@@ -270,11 +284,16 @@ The API split is now explicit:
 - persistence-backed APIs originate in HOST-3 adapters and application services
 - persisted context orchestration begins in `@host/context-service`
 - transport-neutral API dispatch begins in `@host/api-host`
+- reusable external integrations begin in HOST-4 above `@host/runtime-composition`
 
 ### Example Request Flow
 
 ```text
 Caller
+  ->
+future integration
+  ->
+future runtime composition entry
   ->
 future adapter
   ->
@@ -327,6 +346,7 @@ The HOST-3 application layer is approved as an architecture baseline.
 The `@host/api-host` contract is frozen at protocol version `1.0.0`.
 Future work may add adapters, but adapter work must implement the HOST-3.3 contract rather than redefining it.
 The Transport Layer and runtime edge are now implemented through canonical contract, translation, host, and bootstrap packages.
+HOST-4.0 adds the next architectural boundary above that runtime edge without introducing any integration runtime.
 
 This baseline defines boundaries only.
-It does not approve package creation, business logic, provider selection, or product functionality.
+It does not approve package creation, business logic, provider selection, product functionality, or integration runtime implementation.
