@@ -24,6 +24,10 @@
     { "path": "./packages/rest-runtime-host" },
     { "path": "./packages/runtime-composition" },
     { "path": "./packages/integration-contracts" },
+    { "path": "./packages/integration-events" },
+    { "path": "./packages/integration-workflow" },
+    { "path": "./packages/integration-execution" },
+    { "path": "./packages/integration-execution-persistence" },
     { "path": "./packages/integration-mcp" },
     { "path": "./packages/context-persistence-filesystem" },
     { "path": "./packages/context-persistence-sqlite" }

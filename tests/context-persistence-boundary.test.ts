@@ -6,6 +6,7 @@ import process from 'node:process';
 
 const isProviderPackage = (packageDir: string) => packageDir === 'context-persistence-filesystem' || packageDir === 'context-persistence-sqlite';
 const isApplicationConsumer = (packageDir: string) => packageDir === 'context-service' || packageDir === 'runtime-composition';
+const isApprovedDurableExecutionConsumer = (packageDir: string) => packageDir === 'integration-execution-persistence';
 
 test('HOST-2.4 keeps dependency direction one-way away from HOST-1', () => {
   const root = process.cwd();
@@ -26,7 +27,12 @@ test('HOST-2.4 keeps dependency direction one-way away from HOST-1', () => {
   assert.deepEqual(contextPersistenceDependencies, ['@host/context-runtime', '@host/context-store', '@host/kernel-core', '@host/kernel-types']);
 
   for (const packageDir of workspacePackages) {
-    if (packageDir === 'context-persistence' || isProviderPackage(packageDir) || isApplicationConsumer(packageDir)) {
+    if (
+      packageDir === 'context-persistence' ||
+      isProviderPackage(packageDir) ||
+      isApplicationConsumer(packageDir) ||
+      isApprovedDurableExecutionConsumer(packageDir)
+    ) {
       continue;
     }
 

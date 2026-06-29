@@ -77,7 +77,11 @@ Product repositories are the delivery plane beneath the HOST application boundar
 The Transport Layer now has `@host/transport-adapter` as its canonical contract package, `@host/transport-rest` as its first concrete translation package above the frozen API Host protocol, and `@host/rest-runtime-host` plus `@host/runtime-composition` as the runtime edge above translation.
 HOST-4.0 adds the Integration Layer as the next architectural boundary above runtime composition.
 HOST-4E now implements that foundation through `@host/integration-contracts`.
-HOST-4.5 validates it with `@host/integration-mcp` as the first concrete reusable integration runtime.
+HOST-4.6 adds `@host/integration-events` as the canonical event and workflow contract foundation for future integrations.
+HOST-4.7 adds `@host/integration-workflow` as the canonical workflow runtime that consumes the event model for deterministic orchestration.
+HOST-4.8 adds `@host/integration-execution` as the canonical execution runtime that coordinates workflow instances, event dispatch, and execution lifecycle.
+HOST-4.9 adds `@host/integration-execution-persistence` as the durable execution state layer that persists and restores workflow, execution, dispatch, and event history state without automatic replay.
+HOST-4.5 validates the layer with `@host/integration-mcp` as the first concrete reusable integration runtime.
 
 ## Architectural Planes
 
@@ -173,11 +177,7 @@ Responsibilities:
 - external system adapters
 - AI tool adapters
 - MCP server composition
-- event consumers and publishers
-- message brokers
-- webhooks
-- schedulers
-- workflow triggers
+- canonical event and workflow contracts
 - reusable product-facing integrations
 
 The canonical execution, application, transport, runtime-edge, and future integration stack is now:
@@ -236,6 +236,10 @@ Runtime Edge
 Future Integration Layer
 
 @host/integration-contracts
+@host/integration-events
+@host/integration-workflow
+@host/integration-execution
+@host/integration-execution-persistence
 @host/integration-mcp
 
 ↓
@@ -278,6 +282,10 @@ Ownership boundaries remain unchanged:
 - The Runtime Edge owns bootstrap and host composition above the Transport Layer.
 - The Integration Layer owns reusable external attachment points above runtime composition and below products.
 - `@host/integration-contracts` now provides the canonical registration, configuration, health, and bootstrap base for all future integrations.
+- `@host/integration-events` now provides the canonical event envelope, event registry, publication and subscription contract, and workflow trigger base for future integrations.
+- `@host/integration-workflow` now provides the canonical workflow definition, registry, execution context, lifecycle, and compensation-aware orchestration base for future integrations.
+- `@host/integration-execution` now provides the canonical execution registry, coordinator, dispatch model, context propagation, and lifecycle engine for future integrations.
+- `@host/integration-execution-persistence` now provides the canonical durable repository and recovery engine for workflow, execution, dispatch, and event history state.
 - `@host/integration-mcp` now serves as the reference proof that the Integration Layer can host a real reusable runtime without bypassing runtime composition.
 - Product repositories own implementation and delivery artifacts beneath those shared boundaries.
 
@@ -416,6 +424,13 @@ HOST-4.0 introduces the Integration Layer as the next architectural boundary abo
 
 HOST-4E implements the Integration Foundation through `@host/integration-contracts`, establishing canonical contracts, registry behavior, configuration validation, and deterministic lifecycle bootstrap.
 
+HOST-4.6 implements `@host/integration-events` as the canonical event communication foundation, establishing immutable event envelopes, registry behavior, deterministic defaults, and workflow trigger primitives without selecting transport or orchestration runtimes.
+
+HOST-4.7 implements `@host/integration-workflow` as the canonical orchestration foundation, establishing immutable workflow definitions, deterministic lifecycle modeling, execution context and state, and retry/idempotency/compensation metadata without selecting durable execution or scheduler runtimes.
+
+HOST-4.8 implements `@host/integration-execution` as the canonical execution foundation, establishing immutable execution instances, deterministic lifecycle state, dispatch coordination, execution context propagation, cancellation, and observability metadata without selecting infrastructure execution engines.
+HOST-4.9 implements `@host/integration-execution-persistence` as the canonical durable execution state foundation, establishing provider-neutral repositories, optimistic concurrency, immutable history records, and deterministic recovery without selecting schedulers, timers, or replay engines.
+
 HOST-4.5 implements `@host/integration-mcp` as the first concrete Integration Layer runtime, proving MCP tools and resources can be exposed through the approved runtime path without introducing a network listener or product-specific integration.
 
 ## Traceability Architecture
@@ -488,6 +503,10 @@ Current status:
 - `@host/runtime-composition` implemented as the canonical runtime bootstrap package
 - HOST-4.0 integration architecture baseline established
 - `@host/integration-contracts` implemented as the Integration Foundation package
+- `@host/integration-events` implemented as the canonical event foundation package
+- `@host/integration-workflow` implemented as the canonical workflow runtime package
+- `@host/integration-execution` implemented as the canonical execution runtime package
+- `@host/integration-execution-persistence` implemented as the canonical durable execution state package
 - `@host/integration-mcp` implemented as the reference MCP integration runtime
 
 ## Reading Order

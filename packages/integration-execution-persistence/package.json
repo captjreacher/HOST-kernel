@@ -1,0 +1,26 @@
+{
+  "name": "@host/integration-execution-persistence",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@host/context-persistence": "file:../context-persistence",
+    "@host/integration-events": "file:../integration-events",
+    "@host/integration-execution": "file:../integration-execution",
+    "@host/integration-workflow": "file:../integration-workflow"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

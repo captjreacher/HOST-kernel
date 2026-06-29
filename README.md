@@ -14,7 +14,7 @@
 
 HOST-kernel is the Platform Kernel runtime for the MGRNZ ecosystem platform.
 
-Current release: Kernel 1.10 with the HOST-2 execution layer frozen, HOST-3 functionally complete through runtime composition, HOST-4E implemented as the Integration Foundation, and HOST-4.5 validated through the first MCP integration runtime.
+Current release: Kernel 1.10 with the HOST-2 execution layer frozen, HOST-3 functionally complete through runtime composition, HOST-4E implemented as the Integration Foundation, HOST-4.6 implemented as the canonical event model foundation, HOST-4.7 implemented as the canonical workflow runtime foundation, HOST-4.8 implemented as the canonical execution runtime foundation, HOST-4.9 implemented as the durable execution state foundation, and HOST-4.5 validated through the first MCP integration runtime.
 
 Execution Plane runtime status: `context-runtime`, `context-store`, and `context-persistence` are implemented and architecture-frozen pending concrete provider adapters.
 
@@ -24,7 +24,7 @@ Transport Layer status: `@host/transport-adapter` defines the frozen Transport A
 
 Runtime Foundation status: `@host/runtime-contracts` defines the shared authentication, correlation, and observability contracts, and `@host/runtime-composition` provides the canonical dependency-injected bootstrap chain from persistence provider to REST runtime host.
 
-Integration Layer status: `@host/integration-contracts` now implements the canonical Integration Foundation above `@host/runtime-composition`, and `@host/integration-mcp` now validates that foundation as the first concrete reusable integration runtime. No product-specific integration or third-party SDK runtime is introduced in this repository.
+Integration Layer status: `@host/integration-contracts` now implements the canonical Integration Foundation above `@host/runtime-composition`, `@host/integration-events` now implements the canonical event contract foundation above that boundary, `@host/integration-workflow` now implements the canonical workflow runtime above events, `@host/integration-execution` now implements the canonical execution coordinator above workflow, `@host/integration-execution-persistence` now implements durable execution state and deterministic recovery above the canonical persistence provider boundary, and `@host/integration-mcp` validates the layer as the first concrete reusable integration runtime. No product-specific integration, broker runtime, scheduler runtime, durable workflow runtime, infrastructure execution runtime, or third-party SDK runtime is introduced in this repository.
 
 The canonical governance entry point for the ecosystem is [docs/constitution/ecosystem-constitution.md](docs/constitution/ecosystem-constitution.md).
 
@@ -64,6 +64,10 @@ The repository now uses a package-oriented monorepo structure:
 - `packages/rest-runtime-host` for the injected REST runtime host boundary
 - `packages/runtime-composition` for canonical provider-to-runtime-host bootstrap composition
 - `packages/integration-contracts` for the canonical integration lifecycle, configuration, registry, and bootstrap foundation
+- `packages/integration-events` for the canonical event envelope, event registry, publication/subscription contracts, and workflow trigger primitives
+- `packages/integration-workflow` for the canonical workflow definitions, registry, execution context/state, and deterministic lifecycle runtime
+- `packages/integration-execution` for the canonical execution instances, registry, dispatch coordination, context propagation, and deterministic lifecycle runtime
+- `packages/integration-execution-persistence` for provider-neutral durable workflow, execution, dispatch, and event-history persistence plus deterministic recovery
 - `packages/integration-mcp` for the reference MCP integration runtime above the Integration Foundation
 - `packages/context-persistence-filesystem` for the first concrete filesystem provider-layer adapter
 - `packages/context-persistence-sqlite` for the concrete SQLite provider-layer adapter
@@ -95,6 +99,9 @@ npm run verify:graph
 - [docs/architecture/transport-layer.md](docs/architecture/transport-layer.md)
 - [docs/architecture/runtime-architecture.md](docs/architecture/runtime-architecture.md)
 - [docs/architecture/integration-layer.md](docs/architecture/integration-layer.md)
+- [docs/architecture/event-architecture.md](docs/architecture/event-architecture.md)
+- [docs/architecture/workflow-architecture.md](docs/architecture/workflow-architecture.md)
+- [docs/architecture/execution-architecture.md](docs/architecture/execution-architecture.md)
 - [docs/architecture/mcp-integration.md](docs/architecture/mcp-integration.md)
 - [docs/architecture/ADR-007-transport-adapter-architecture-baseline.md](docs/architecture/ADR-007-transport-adapter-architecture-baseline.md)
 - [docs/architecture/ADR-008-integration-layer-architecture-baseline.md](docs/architecture/ADR-008-integration-layer-architecture-baseline.md)
@@ -112,4 +119,4 @@ npm run verify:graph
 - The Application Layer is architecture-defined above the execution/provider stack and below products, with `@host/context-service` and `@host/api-host` providing the first implemented service and host boundaries for persistence-backed context operations.
 - The runtime edge now includes `@host/rest-runtime-host`, which composes an injected `ApiHost` with `@host/transport-rest` through a reusable `handleRestRequest(...)` boundary without becoming a framework app.
 - HOST-3E completes the canonical runtime foundation with shared auth and observability contracts in `@host/runtime-contracts` and a DI-first bootstrap package in `@host/runtime-composition`.
-- HOST-4E implements the Integration Foundation through `@host/integration-contracts`, and HOST-4.5 validates it through `@host/integration-mcp` without beginning Hermes, product-specific tools, or any third-party SDK-backed runtime.
+- HOST-4E implements the Integration Foundation through `@host/integration-contracts`, HOST-4.6 adds the canonical event contract foundation through `@host/integration-events`, HOST-4.7 adds the canonical workflow runtime through `@host/integration-workflow`, HOST-4.8 adds the canonical execution runtime through `@host/integration-execution`, HOST-4.9 adds provider-neutral durable execution persistence and recovery through `@host/integration-execution-persistence`, and HOST-4.5 validates the layer through `@host/integration-mcp` without beginning Hermes, product-specific tools, or any third-party SDK-backed runtime.

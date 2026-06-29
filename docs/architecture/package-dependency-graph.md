@@ -42,6 +42,10 @@ graph TD
 
   subgraph Integration["Integration Layer / HOST-4"]
   IntegrationContracts["@host/integration-contracts"]
+  IntegrationEvents["@host/integration-events"]
+  IntegrationWorkflow["@host/integration-workflow"]
+  IntegrationExecution["@host/integration-execution"]
+  IntegrationExecutionPersistence["@host/integration-execution-persistence"]
   IntegrationMcp["@host/integration-mcp"]
   end
 
@@ -108,6 +112,13 @@ graph TD
   RuntimeComposition --> Rest
   RuntimeComposition --> RuntimeHost
   IntegrationContracts --> RuntimeComposition
+  IntegrationEvents --> IntegrationContracts
+  IntegrationWorkflow --> IntegrationEvents
+  IntegrationExecution --> IntegrationWorkflow
+  IntegrationExecutionPersistence --> IntegrationExecution
+  IntegrationExecutionPersistence --> IntegrationWorkflow
+  IntegrationExecutionPersistence --> IntegrationEvents
+  IntegrationExecutionPersistence --> CtxPersistence
   IntegrationMcp --> IntegrationContracts
   Products --> IntegrationMcp
 ```
@@ -168,6 +179,10 @@ Runtime Edge
 Integration Layer
 
 @host/integration-contracts
+@host/integration-events
+@host/integration-workflow
+@host/integration-execution
+@host/integration-execution-persistence
 @host/integration-mcp
 
 ↓
@@ -198,6 +213,10 @@ Products
 - `@host/rest-runtime-host` is the first runtime host package and may depend only on `@host/transport-rest` and `@host/api-host`.
 - `@host/runtime-composition` is the canonical bootstrap package and may depend only on `@host/context-persistence`, `@host/context-service`, `@host/api-host`, `@host/transport-rest`, `@host/rest-runtime-host`, and `@host/runtime-contracts`.
 - `@host/integration-contracts` may depend only on `@host/runtime-composition`.
+- `@host/integration-events` may depend only on `@host/integration-contracts`.
+- `@host/integration-workflow` may depend only on `@host/integration-events`.
+- `@host/integration-execution` may depend only on `@host/integration-workflow`.
+- `@host/integration-execution-persistence` may depend only on `@host/integration-execution`, `@host/integration-workflow`, `@host/integration-events`, and `@host/context-persistence`.
 - `@host/integration-mcp` may depend only on `@host/integration-contracts`.
 - transport adapters must not depend on execution packages, provider packages, or HOST-1 kernel internals.
 - runtime edge packages must not introduce framework listeners, service locators, or vendor integrations.
@@ -222,9 +241,13 @@ The runtime edge currently contains two implemented package responsibilities:
 - `@host/rest-runtime-host` for injected `ApiHost` composition, reusable request handling, response shaping through `@host/transport-rest`, and deterministic runtime-level fallback errors
 - `@host/runtime-composition` for provider-to-runtime-host bootstrap assembly and lifecycle-oriented runtime composition
 
-The Integration Layer currently contains one implemented foundation package responsibility and one implemented reference runtime:
+The Integration Layer currently contains four implemented foundation package responsibilities and one implemented reference runtime:
 
 - `@host/integration-contracts` for canonical lifecycle contracts, configuration contracts, integration registration, health reporting, and deterministic integration bootstrap above runtime composition
+- `@host/integration-events` for immutable event envelopes, event registry contracts, publication and subscription contracts, workflow trigger primitives, and deterministic metadata defaults
+- `@host/integration-workflow` for immutable workflow definitions, workflow registration, deterministic lifecycle transitions, execution context/state modeling, and retry/idempotency/compensation metadata handling
+- `@host/integration-execution` for immutable execution instances, execution registry, execution coordinator and dispatch contracts, context propagation, observability metadata, and deterministic execution lifecycle transitions
+- `@host/integration-execution-persistence` for provider-neutral durable workflow, execution, dispatch, and event-history repositories plus deterministic recovery after restart
 - `@host/integration-mcp` for the reference MCP runtime, tool and resource exposure, runtime-path request translation, and deterministic MCP error mapping
 
-The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, `@host/runtime-composition`, `@host/integration-contracts`, and `@host/integration-mcp` dependency rules while still reserving `@host/app-` and `@host/product-` prefixes for future architecture enforcement.
+The repository verifier in [scripts/verify-package-graph.mjs](../../scripts/verify-package-graph.mjs) now enforces the implemented `@host/context-service`, `@host/api-host`, `@host/transport-adapter`, `@host/transport-rest`, `@host/rest-runtime-host`, `@host/runtime-composition`, `@host/integration-contracts`, `@host/integration-events`, `@host/integration-workflow`, `@host/integration-execution`, `@host/integration-execution-persistence`, and `@host/integration-mcp` dependency rules while still reserving `@host/app-` and `@host/product-` prefixes for future architecture enforcement.

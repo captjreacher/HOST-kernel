@@ -10,6 +10,8 @@ It defines package responsibilities, dependency rules, extension points, and pro
 - `@host/context-store`
 - `@host/context-persistence`
 
+HOST-4.9 now proves that durable integration execution state can be layered above this boundary without bypassing it.
+
 ## Canonical Stack
 
 ```text
@@ -188,6 +190,7 @@ Stability expectations:
 - stable v1 provider framework
 - concrete adapter growth must happen in separate provider packages
 - provider contracts must remain deterministic and technology-agnostic at the boundary
+- higher-layer durable execution packages must compose through provider sessions, transactions, and store contracts instead of direct storage SDK access
 
 ## Adapter Strategy
 

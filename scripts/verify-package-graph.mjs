@@ -36,6 +36,10 @@ const runtimeHostPackages = new Set(['@host/rest-runtime-host']);
 const runtimeCompositionPackages = new Set(['@host/runtime-composition']);
 const integrationPackagePrefixes = ['@host/integration-'];
 const integrationFoundationPackages = new Set(['@host/integration-contracts']);
+const integrationEventPackages = new Set(['@host/integration-events']);
+const integrationWorkflowPackages = new Set(['@host/integration-workflow']);
+const integrationExecutionPackages = new Set(['@host/integration-execution']);
+const integrationExecutionPersistencePackages = new Set(['@host/integration-execution-persistence']);
 
 const layerRank = {
   knowledge: 0,
@@ -48,7 +52,11 @@ const layerRank = {
   runtimeHost: 7,
   runtimeComposition: 8,
   integrationFoundation: 9,
-  integrationImplementation: 10,
+  integrationEvents: 10,
+  integrationWorkflow: 11,
+  integrationExecution: 12,
+  integrationExecutionPersistence: 13,
+  integrationImplementation: 14,
 };
 
 const allowedDependencies = new Map([
@@ -84,6 +92,15 @@ const allowedRuntimeCompositionDependencies = new Map([
   ],
 ]);
 const allowedIntegrationFoundationDependencies = new Set(['@host/runtime-composition']);
+const allowedIntegrationEventDependencies = new Set(['@host/integration-contracts']);
+const allowedIntegrationWorkflowDependencies = new Set(['@host/integration-events']);
+const allowedIntegrationExecutionDependencies = new Set(['@host/integration-workflow']);
+const allowedIntegrationExecutionPersistenceDependencies = new Set([
+  '@host/context-persistence',
+  '@host/integration-events',
+  '@host/integration-execution',
+  '@host/integration-workflow',
+]);
 const allowedIntegrationImplementationDependencies = new Set(['@host/integration-contracts']);
 
 const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
@@ -115,6 +132,18 @@ const layerFor = (packageName) => {
   }
   if (integrationFoundationPackages.has(packageName)) {
     return 'integrationFoundation';
+  }
+  if (integrationEventPackages.has(packageName)) {
+    return 'integrationEvents';
+  }
+  if (integrationWorkflowPackages.has(packageName)) {
+    return 'integrationWorkflow';
+  }
+  if (integrationExecutionPackages.has(packageName)) {
+    return 'integrationExecution';
+  }
+  if (integrationExecutionPersistencePackages.has(packageName)) {
+    return 'integrationExecutionPersistence';
   }
   if (startsWithAny(packageName, integrationPackagePrefixes)) {
     return 'integrationImplementation';
@@ -204,6 +233,57 @@ for (const [name, dependencies] of edges.entries()) {
     }
   }
 
+  if (packageLayer === 'integrationEvents') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationEventDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationEventDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/integration-contracts')) {
+      throw new Error(`${name} must depend on @host/integration-contracts as the canonical Integration Layer contract boundary.`);
+    }
+  }
+
+  if (packageLayer === 'integrationWorkflow') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationWorkflowDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationWorkflowDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/integration-events')) {
+      throw new Error(`${name} must depend on @host/integration-events as the canonical event-model boundary.`);
+    }
+  }
+
+  if (packageLayer === 'integrationExecution') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationExecutionDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationExecutionDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/integration-workflow')) {
+      throw new Error(`${name} must depend on @host/integration-workflow as the canonical workflow-runtime boundary.`);
+    }
+  }
+
+  if (packageLayer === 'integrationExecutionPersistence') {
+    for (const dependency of dependencies) {
+      if (!allowedIntegrationExecutionPersistenceDependencies.has(dependency)) {
+        throw new Error(`${name} may only depend on ${[...allowedIntegrationExecutionPersistenceDependencies].sort().join(', ')} but also depends on ${dependency}.`);
+      }
+    }
+
+    if (!dependencies.includes('@host/integration-execution')) {
+      throw new Error(`${name} must depend on @host/integration-execution as the canonical execution-runtime boundary.`);
+    }
+    if (!dependencies.includes('@host/context-persistence')) {
+      throw new Error(`${name} must depend on @host/context-persistence as the canonical durable state boundary.`);
+    }
+  }
+
   if (packageLayer === 'integrationImplementation') {
     for (const dependency of dependencies) {
       if (!allowedIntegrationImplementationDependencies.has(dependency)) {
@@ -234,7 +314,12 @@ for (const [name, dependencies] of edges.entries()) {
 
   if (name !== executionPackages.persistence && dependencies.includes(executionPackages.persistence)) {
     const dependentLayer = layerFor(name);
-    if (dependentLayer !== 'provider' && dependentLayer !== 'application' && dependentLayer !== 'runtimeComposition') {
+    if (
+      dependentLayer !== 'provider' &&
+      dependentLayer !== 'application' &&
+      dependentLayer !== 'runtimeComposition' &&
+      dependentLayer !== 'integrationExecutionPersistence'
+    ) {
       throw new Error(`${name} must not depend on ${executionPackages.persistence}; only providers or applications may sit above the persistence boundary.`);
     }
   }
@@ -269,8 +354,37 @@ for (const [name, dependencies] of edges.entries()) {
 
   if (name !== '@host/integration-contracts' && dependencies.includes('@host/integration-contracts')) {
     const dependentLayer = layerFor(name);
-    if (dependentLayer !== 'integrationImplementation') {
-      throw new Error(`${name} must not depend on @host/integration-contracts; only concrete integration packages may sit above the integration foundation boundary.`);
+    if (dependentLayer !== 'integrationEvents' && dependentLayer !== 'integrationImplementation') {
+      throw new Error(`${name} must not depend on @host/integration-contracts; only integration event foundations or concrete integration packages may sit above the integration foundation boundary.`);
+    }
+  }
+
+  if (name !== '@host/integration-events' && dependencies.includes('@host/integration-events')) {
+    const dependentLayer = layerFor(name);
+    if (
+      dependentLayer !== 'integrationWorkflow' &&
+      dependentLayer !== 'integrationExecutionPersistence' &&
+      dependentLayer !== 'integrationImplementation'
+    ) {
+      throw new Error(`${name} must not depend on @host/integration-events; only workflow runtime foundations or concrete integration packages may sit above the event foundation boundary.`);
+    }
+  }
+
+  if (name !== '@host/integration-workflow' && dependencies.includes('@host/integration-workflow')) {
+    const dependentLayer = layerFor(name);
+    if (
+      dependentLayer !== 'integrationExecution' &&
+      dependentLayer !== 'integrationExecutionPersistence' &&
+      dependentLayer !== 'integrationImplementation'
+    ) {
+      throw new Error(`${name} must not depend on @host/integration-workflow; only execution runtime foundations or concrete integration packages may sit above the workflow runtime boundary.`);
+    }
+  }
+
+  if (name !== '@host/integration-execution' && dependencies.includes('@host/integration-execution')) {
+    const dependentLayer = layerFor(name);
+    if (dependentLayer !== 'integrationExecutionPersistence' && dependentLayer !== 'integrationImplementation') {
+      throw new Error(`${name} must not depend on @host/integration-execution; only concrete integration packages may sit above the execution runtime boundary.`);
     }
   }
 }

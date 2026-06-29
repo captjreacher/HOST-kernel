@@ -56,8 +56,11 @@ This index is the onboarding map for the HOST governance framework.
 | [kernel API architecture](architecture/kernel-api.md) | Runtime facade and endpoint constraints |
 | [application layer architecture](architecture/application-layer.md) | HOST-3 boundary for orchestration, persistence-backed APIs, runtime request context propagation, and the frozen API Host |
 | [transport layer architecture](architecture/transport-layer.md) | Canonical Transport Layer and runtime-edge packages, including runtime contracts and bootstrap composition above the frozen API Host protocol |
-| [runtime architecture](architecture/runtime-architecture.md) | Canonical runtime composition stack including the implemented Integration Foundation above runtime composition |
-| [integration layer architecture](architecture/integration-layer.md) | HOST-4 boundary and implementation foundation for reusable external integrations above runtime composition and below products |
+| [runtime architecture](architecture/runtime-architecture.md) | Canonical runtime composition stack including the implemented Integration Foundation, event foundation, workflow runtime, execution runtime, and durable execution state layer above runtime composition |
+| [integration layer architecture](architecture/integration-layer.md) | HOST-4 boundary and implementation foundation for reusable external integrations above runtime composition and below products, including durable execution state and recovery |
+| [event architecture](architecture/event-architecture.md) | Canonical immutable event model, event registry, publication contracts, and workflow trigger primitives for future integrations |
+| [workflow architecture](architecture/workflow-architecture.md) | Canonical workflow definitions, registry, execution context/state, and deterministic lifecycle contracts for future integrations |
+| [execution architecture](architecture/execution-architecture.md) | Canonical execution instances, registry, dispatch coordination, context propagation, durable state persistence, and deterministic recovery contracts for future integrations |
 | [MCP integration runtime](architecture/mcp-integration.md) | Reference MCP implementation proving the Integration Layer through `@host/integration-mcp` |
 | [ADR-005](architecture/ADR-005-context-persistence-api-boundary.md) | Boundary between HOST-1 runtime context APIs and future persistence-backed application APIs |
 | [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) | Application Layer baseline and dependency rules for HOST-3 |

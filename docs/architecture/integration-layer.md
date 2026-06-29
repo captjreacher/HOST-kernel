@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document records the HOST-4.0 architecture baseline and the HOST-4E implementation foundation for reusable integrations above runtime composition and below products.
+This document records the HOST-4.0 architecture baseline, the HOST-4E implementation foundation, the HOST-4.6 event model foundation, the HOST-4.7 workflow runtime foundation, the HOST-4.8 execution runtime foundation, and the HOST-4.9 durable execution state foundation for reusable integrations above runtime composition and below products.
 
 The Integration Layer exists to connect external systems, tools, protocols, services, and operator surfaces to the kernel without coupling those concerns into the Application Layer, Execution Layer, provider layer, or HOST-1 kernel packages.
 
@@ -48,13 +48,13 @@ The Integration Layer owns:
 - external system adapters
 - AI tool adapters
 - MCP server composition
-- event consumers
-- event publishers
-- message broker attachment
+- canonical event contracts
+- event publication and subscription contracts
+- workflow runtime contracts
+- execution runtime contracts
+- durable execution persistence and recovery
 - third-party API attachment
-- webhook entry points
-- schedulers
-- workflow triggers
+- workflow trigger contracts
 - reusable product-facing integration assembly
 
 It does not own:
@@ -132,6 +132,41 @@ It depends only on:
 
 - `@host/integration-contracts`
 
+HOST-4.6 now implements the canonical event and workflow contract package:
+
+- `@host/integration-events`
+
+It depends only on:
+
+- `@host/integration-contracts`
+
+HOST-4.7 now implements the canonical workflow runtime package:
+
+- `@host/integration-workflow`
+
+It depends only on:
+
+- `@host/integration-events`
+
+HOST-4.8 now implements the canonical execution runtime package:
+
+- `@host/integration-execution`
+
+It depends only on:
+
+- `@host/integration-workflow`
+
+HOST-4.9 now implements the canonical durable execution state package:
+
+- `@host/integration-execution-persistence`
+
+It depends only on:
+
+- `@host/integration-execution`
+- `@host/integration-workflow`
+- `@host/integration-events`
+- `@host/context-persistence`
+
 ## Transport-Neutral Integration Contract
 
 The Integration Layer now freezes a reusable contract shape above `@host/runtime-composition`.
@@ -163,9 +198,27 @@ Required contract concerns:
 - shutdown
 - dependency injection
 - configuration
+- immutable event envelopes
+- event registry
+- event publication contracts
+- event subscription contracts
+- workflow trigger metadata
+- workflow definitions
+- workflow registration
+- workflow execution lifecycle
+- execution registry
+- execution coordinator
+- execution dispatch coordination
+- execution lifecycle state
+- durable execution repositories
+- deterministic recovery lifecycle
 
-The contract is now implementation-ready through `@host/integration-contracts`.
-HOST-4.5 proves the contract with `@host/integration-mcp` while still avoiding any third-party SDK or listener runtime.
+The integration contract is implementation-ready through `@host/integration-contracts`.
+The canonical event model is implementation-ready through `@host/integration-events`.
+The canonical workflow runtime is implementation-ready through `@host/integration-workflow`.
+The canonical execution runtime is implementation-ready through `@host/integration-execution`.
+The canonical durable execution state model is implementation-ready through `@host/integration-execution-persistence`.
+HOST-4.5 proves the layer with `@host/integration-mcp` while still avoiding any third-party SDK, broker, scheduler, or listener runtime.
 
 ## Integration Registry
 
@@ -178,6 +231,68 @@ HOST-4.2 now defines a reusable registry capable of:
 - reporting health
 
 The registry remains transport-neutral and runtime-neutral.
+
+## Event Foundation
+
+HOST-4.6 defines the canonical reusable event model for future integrations.
+
+Its responsibilities are:
+
+- immutable published event envelopes
+- reserved event namespace guidance
+- event type registration and discovery
+- payload schema description
+- publish and subscribe contracts
+- workflow trigger primitives
+- deterministic metadata defaults
+
+It does not assume a broker, queue, scheduler, webhook runtime, or workflow engine.
+
+## Workflow Runtime
+
+HOST-4.7 defines the canonical reusable workflow runtime for future integrations.
+
+Its responsibilities are:
+
+- immutable workflow definitions
+- workflow registration and discovery
+- deterministic execution context
+- deterministic execution state
+- start, resume, complete, cancel, and fail contracts
+- retry, idempotency, and compensation metadata handling
+
+It does not assume durable execution, delayed jobs, timers, background workers, or product-specific workflows.
+
+## Execution Runtime
+
+HOST-4.8 defines the canonical reusable execution runtime for future integrations.
+
+Its responsibilities are:
+
+- immutable execution instances
+- execution registry and duplicate prevention
+- execution coordinator contracts
+- deterministic dispatch records
+- consistent execution context propagation
+- cancellation and failure modeling
+
+It does not assume workers, durable execution, timers, queues, brokers, or product-specific execution logic.
+
+## Durable Execution State
+
+HOST-4.9 defines the canonical reusable durable execution state model for future integrations.
+
+Its responsibilities are:
+
+- workflow definition persistence
+- workflow instance persistence
+- execution instance persistence
+- dispatch history persistence
+- event history persistence
+- deterministic state recovery without replay
+- provider-neutral repository contracts above `@host/context-persistence`
+
+It does not assume automatic replay, timers, schedulers, workers, queues, or distributed coordination.
 
 ## Integration Bootstrap
 
@@ -223,6 +338,14 @@ Allowed:
 ```text
 integration
   ->
+integration-execution-persistence
+  ->
+integration-execution
+  ->
+integration-workflow
+  ->
+integration-events
+  ->
 integration-contracts
   ->
 runtime-composition
@@ -235,6 +358,17 @@ Forbidden:
 - integration -> kernel
 - execution -> integration
 - application -> integration
+- integration-events -> transport implementations
+- integration-events -> application services
+- integration-events -> products
+- integration-workflow -> transport implementations
+- integration-workflow -> application services
+- integration-workflow -> products
+- integration-execution -> transport implementations
+- integration-execution -> application services
+- integration-execution -> products
+- integration-execution-persistence -> products
+- integration-execution-persistence -> provider SDKs
 
 Additional constraints:
 
@@ -276,6 +410,9 @@ Products must not become the shared architectural home for reusable integration 
 ## Implementation Status
 
 HOST-4E makes the Integration Layer implementation-ready through the shared foundation package.
+HOST-4.6 adds the canonical event and workflow foundation through `@host/integration-events`.
+HOST-4.7 adds the canonical workflow runtime through `@host/integration-workflow`.
+HOST-4.8 adds the canonical execution runtime through `@host/integration-execution`.
 HOST-4.5 proves that implementation model with `@host/integration-mcp` as the first concrete reusable integration runtime.
 
 This baseline still does not approve:

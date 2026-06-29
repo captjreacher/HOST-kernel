@@ -46,6 +46,17 @@ This entry records the first concrete Integration Layer runtime.
 - graph verification now enforces `@host/integration-mcp` -> `@host/integration-contracts` as the canonical concrete integration dependency boundary
 - no Hermes, prompt orchestration, product-specific tool, or third-party SDK runtime is introduced
 
+## HOST-4.9 - Durable Execution Foundation
+
+This entry records the durable execution state foundation for the Integration Layer.
+
+- `@host/integration-execution-persistence` is now implemented as the canonical durable state package above `@host/integration-execution` and `@host/context-persistence`
+- provider-neutral repositories now persist workflow definitions, workflow instances, execution instances, dispatch records, event history, and execution metadata
+- deterministic recovery now restores workflow state, execution state, execution context, execution status, and dispatch or event history after reconnect or process restart
+- optimistic concurrency now protects persisted execution state while immutable dispatch and event history records prevent in-place history mutation
+- validation now runs against both the in-memory provider-neutral contract and SQLite restart recovery
+- no background workers, schedulers, timers, queues, distributed replay, or automatic execution resume are introduced
+
 ## HOST-3.0 - Application Layer Architecture Baseline
 
 This entry records the HOST-3.0 architecture baseline.
