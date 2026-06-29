@@ -57,6 +57,18 @@ This entry records the durable execution state foundation for the Integration La
 - validation now runs against both the in-memory provider-neutral contract and SQLite restart recovery
 - no background workers, schedulers, timers, queues, distributed replay, or automatic execution resume are introduced
 
+## HOST-4.10 - Integration Platform Release Baseline
+
+This entry records the HOST-4 release baseline as a governance and architecture freeze.
+
+- HOST-4 is now frozen as Integration Platform Baseline v1.0
+- the frozen catalogue now includes `@host/integration-contracts`, `@host/integration-events`, `@host/integration-workflow`, `@host/integration-execution`, `@host/integration-execution-persistence`, and `@host/integration-mcp`
+- `docs/architecture/integration-platform.md` now acts as the canonical HOST-4 architecture document
+- `ADR-009` now records the integration platform baseline, layering rules, extension model, and compatibility expectations
+- release documentation now summarizes the completed HOST-4 milestones, package catalogue, dependency graph, and validation status
+- graph validation is strengthened to make the integration freeze explicit and to guard against provider bypass, application bypass, reverse dependencies, and product coupling
+- no new runtime packages, schedulers, queues, authentication providers, AI runtime concerns, or Hermes runtime behavior are introduced
+
 ## HOST-3.0 - Application Layer Architecture Baseline
 
 This entry records the HOST-3.0 architecture baseline.

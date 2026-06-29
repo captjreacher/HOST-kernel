@@ -8,6 +8,13 @@ const workspacePackages = fs
   .readdirSync(packagesDir, { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .map((entry) => entry.name);
+const expectedWorkspacePackageCount = 30;
+
+if (workspacePackages.length !== expectedWorkspacePackageCount) {
+  throw new Error(
+    `HOST-4.10 freezes the workspace at ${expectedWorkspacePackageCount} packages, but ${workspacePackages.length} were found.`,
+  );
+}
 
 const packageByName = new Map();
 for (const packageName of workspacePackages) {
@@ -40,6 +47,14 @@ const integrationEventPackages = new Set(['@host/integration-events']);
 const integrationWorkflowPackages = new Set(['@host/integration-workflow']);
 const integrationExecutionPackages = new Set(['@host/integration-execution']);
 const integrationExecutionPersistencePackages = new Set(['@host/integration-execution-persistence']);
+const frozenIntegrationPackages = new Set([
+  '@host/integration-contracts',
+  '@host/integration-events',
+  '@host/integration-workflow',
+  '@host/integration-execution',
+  '@host/integration-execution-persistence',
+  '@host/integration-mcp',
+]);
 
 const layerRank = {
   knowledge: 0,
@@ -295,6 +310,29 @@ for (const [name, dependencies] of edges.entries()) {
       throw new Error(`${name} must depend on @host/integration-contracts as the canonical Integration Layer foundation package.`);
     }
   }
+
+  if (startsWithAny(name, integrationPackagePrefixes)) {
+    for (const dependency of dependencies) {
+      if (startsWithAny(dependency, providerPackagePrefixes)) {
+        throw new Error(`${name} must not depend on provider packages such as ${dependency}; provider neutrality must remain intact.`);
+      }
+      if (applicationPackages.has(dependency) || startsWithAny(dependency, applicationPackagePrefixes)) {
+        throw new Error(`${name} must not depend on application packages such as ${dependency}; application bypass is forbidden.`);
+      }
+      if (transportPackages.has(dependency)) {
+        throw new Error(`${name} must not depend on transport packages such as ${dependency}; transport neutrality must remain intact.`);
+      }
+      if (runtimeHostPackages.has(dependency)) {
+        throw new Error(`${name} must not depend on runtime host packages such as ${dependency}; runtime composition is the only approved bootstrap boundary.`);
+      }
+      if (dependency.startsWith('@host/kernel-')) {
+        throw new Error(`${name} must not depend on HOST-1 kernel packages such as ${dependency}; runtime neutrality must remain intact.`);
+      }
+      if (startsWithAny(dependency, applicationPackagePrefixes) || startsWithAny(dependency, ['@host/product-'])) {
+        throw new Error(`${name} must not depend on product-coupled packages such as ${dependency}.`);
+      }
+    }
+  }
 }
 
 for (const [name, dependencies] of edges.entries()) {
@@ -385,6 +423,14 @@ for (const [name, dependencies] of edges.entries()) {
     const dependentLayer = layerFor(name);
     if (dependentLayer !== 'integrationExecutionPersistence' && dependentLayer !== 'integrationImplementation') {
       throw new Error(`${name} must not depend on @host/integration-execution; only concrete integration packages may sit above the execution runtime boundary.`);
+    }
+  }
+
+  if (!startsWithAny(name, integrationPackagePrefixes)) {
+    for (const dependency of dependencies) {
+      if (frozenIntegrationPackages.has(dependency)) {
+        throw new Error(`${name} must not depend upward on frozen integration package ${dependency}; reverse dependencies are forbidden.`);
+      }
     }
   }
 }
