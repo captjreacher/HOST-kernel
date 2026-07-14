@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Originating Objective | OBJ-007 |
-| Status | Proposed |
+| Status | Accepted |
 | Version | 1.0 (draft) |
 | Owner | HOST (governance) / BILLING (implementation) |
 | Last reviewed | 2026-07-14 |
@@ -15,7 +15,7 @@
 
 ## Status
 
-Proposed - 2026-07-14
+Accepted - 2026-07-14
 
 ## Context
 
