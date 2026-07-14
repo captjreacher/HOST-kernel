@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Originating Objective | OBJ-COMMRUN (proposed) |
+| Originating Objective | OBJ-007 |
 | Status | Proposed |
 | Version | 1.0 (draft) |
 | Owner | HOST (governance) / BILLING (implementation) |

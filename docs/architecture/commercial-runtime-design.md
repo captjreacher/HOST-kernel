@@ -5,10 +5,10 @@
 | Field | Value |
 | --- | --- |
 | Document Type | Execution Architecture (pre-implementation) |
-| Proposed Objective | OBJ-COMMRUN (unallocated) |
+| Proposed Objective | OBJ-009 |
 | Proposed ADR | ADR-COMMRUN-01 - Commercial Runtime lifecycle, event vocabulary, and adapter contract |
 | Parent Objective | HOST-5.x Billing Foundation (proposed) |
-| Peer Objectives | OBJ-COMMREG Commercial Registry, OBJ-COMMADP Commercial Adapters |
+| Peer Objectives | OBJ-008 Commercial Registry, Commercial Adapters (future, unallocated) |
 | Status | Draft for Review |
 | Version | 0.1 |
 | Owner | HOST (governance) / BILLING (implementation) |

@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Originating Objective | OBJ-BILLING (proposed) |
+| Originating Objective | OBJ-007 |
 | Status | Proposed |
 | Version | 1.0 (draft) |
 | Owner | HOST |
@@ -69,7 +69,8 @@ Constraints:
 - Requires coordinated authoring across three planes:
   - CONTEXT-BILLING-1 (new objective under OBJ-004)
   - HOST-5.0 Billing Foundation (new HOST objective)
-  - OBJ-COMMREG, OBJ-COMMRUN, OBJ-COMMADP (new BILLING objectives, governed by ADR-REA-01)
+  - OBJ-008 Commercial Registry, OBJ-009 Commercial Engine (new BILLING objectives, governed by ADR-REA-01)
+  - Commercial Adapters remain a future unallocated capability
 - No product-specific commercial launch may proceed until the HOST-5.9 Billing Platform Release Baseline v1.0 is complete.
 - Products may not implement commercial logic in the interim.
 
@@ -79,7 +80,7 @@ Per the OBJ-002 rule *"no implementation begins before governance is complete"*,
 
 - ADR-BILLING-01 (this ADR) approval.
 - ADR-REA-01 approval (governs the BILLING repo's internal shape).
-- OBJ-BILLING allocation in the taxonomy registry (OBJ-001).
+- OBJ-007 allocation in the Objective Registry (governed by OBJ-001).
 - CONTEXT-BILLING-1 Commercial Domain Model authored and accepted.
 - HOST-5.0 Billing Foundation authored and accepted.
 - Maximised AI Price Book delivered (external input, referenced by the Commercial Catalogue).

@@ -25,6 +25,7 @@ The HOST Objective Registry is the single authoritative source for every `OBJ-##
 - HOST governance authorises allocation and lifecycle transitions.
 - A newly allocated objective enters the Registry as `Draft`; allocation is not approval.
 - Registry reservations are permanent. Closed or archived identifiers are never released or reassigned.
+- A single allocated objective may govern a related ADR family when the request envelope is one governance decision with multiple traceability artefacts.
 
 The constitutional objectives `OBJ-000` through `OBJ-006` are seeded as approved Objective Registry records with their existing identifiers, ownership, and titles. Their documentation remains the normative content linked to those records.
 
@@ -66,6 +67,7 @@ Codex sessions should use the same identifier.
 7. Route the objective through `Proposed` and `Approved` governance transitions.
 8. Link decisions and ADRs to the allocated objective.
 9. Hand approved objectives to Roadmap for delivery sequencing when implementation is required.
+10. When several ADRs are one governance envelope, keep the objective shared rather than fragmenting it into artificial sub-objectives.
 
 Governance approval and mechanical allocation are separate actions. Tools may perform reservation, but they may not authorise the scope or approve the resulting objective.
 

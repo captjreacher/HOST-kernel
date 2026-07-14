@@ -6,7 +6,7 @@
 | Field | Value |
 | --- | --- |
 | Document Type | Constitutional Pattern (pre-ADR) |
-| Proposed Objective | OBJ-REA (unallocated) &mdash; peer of OBJ-002 Operating Model |
+| Proposed Objective | OBJ-002 &mdash; governed by the HOST Kernel Operating Model |
 | Proposed ADR | ADR-REA-01 - Adoption of Registry–Engine–Adapter as canonical execution pattern |
 | Status | Draft for Review |
 | Version | 0.1 |
@@ -51,7 +51,7 @@ The recommendation is **yes, adopt**, with the reasoning, rules, exceptions, and
 
 > HOST platform capabilities that execute dynamically against external systems adopt the Registry–Engine–Adapter pattern. **Registries publish canonical definitions. Engines execute state transitions against those definitions. Adapters translate between the canonical model and external providers.** Capabilities that do not require dynamic execution (pure governance, pure vocabulary, pure contract) are exempt and may follow simpler shapes.
 
-**Proposed ADR:** ADR-REA-01. Proposed Objective: OBJ-REA, peer of OBJ-002 in the constitutional hierarchy.
+**Proposed ADR:** ADR-REA-01. Proposed Objective: OBJ-002, governed by the HOST Kernel Operating Model in the constitutional hierarchy.
 
 ---
 
@@ -476,9 +476,9 @@ Every current or proposed capability either **already follows REA**, **fits it n
 - **Adopt REA as a recommendation, not a rule.** Rejected because the discipline REA imposes (no application-to-adapter edges, no adapter business logic, no engine invention of canonical values) is exactly the discipline that decays first under implementation pressure.
 - **Adopt a different pattern (e.g. hexagonal architecture generically).** Rejected because REA is HOST-shaped — it names the specific responsibilities HOST has evolved (Registry as versioned publication, Engine as event-sourced state, Adapter as provider translation). Generic patterns lose the specificity that makes governance possible.
 
-### 7.3 Proposed Objective — OBJ-REA
+### 7.3 Proposed Objective — OBJ-002
 
-Peer of OBJ-002 Operating Model. Sits alongside OBJ-000 (Constitution), OBJ-001 (Taxonomy), OBJ-002 (Operating Model) as a governing objective.
+Governed by OBJ-002 Operating Model. Sits alongside OBJ-000 (Constitution), OBJ-001 (Taxonomy), OBJ-002 (Operating Model) as a governing objective.
 
 Contents:
 - The REA pattern (this document).

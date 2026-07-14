@@ -5,7 +5,7 @@
 | Field | Value |
 | --- | --- |
 | Document Type | Architecture Review (pre-ADR) |
-| Proposed Objective | OBJ-BILLING (unallocated) |
+| Proposed Objective | OBJ-007 |
 | Proposed ADR | ADR-BILLING-01 - Billing plane assignment and adoption |
 | Status | Draft for Review |
 | Version | 0.1 |
@@ -98,9 +98,9 @@ Together these three form the **HOST Commercial Capability**. The name "Billing 
 **Blocking prerequisites** before implementation may begin (per OBJ-002 rule *"No implementation begins before governance is complete"*):
 
 - **ADR-BILLING-01** authoring and approval — decides the plane assignment above.
-- **OBJ-BILLING-DOMAIN** in CONTEXT — canonical commercial vocabulary as an extension of OBJ-004.
-- **OBJ-BILLING-KERNEL** in HOST-kernel — governance contracts.
-- **OBJ-BILLING-RUNTIME-INIT** — allocation of the new execution repo.
+- **Commercial domain model objective** in CONTEXT — canonical commercial vocabulary as an extension of OBJ-004.
+- **Commercial governance objective** in HOST-kernel — governance contracts.
+- **Commercial execution repository allocation** — allocation of the new execution repo.
 - **Maximised AI Price Book** delivered and referenced — no pricing invented.
 
 ---
@@ -532,7 +532,7 @@ Applying these tests up-front prevents future capabilities from being mis-classi
 **Prerequisites** before any implementation may begin:
 
 1. **ADR-BILLING-01** authored and approved. This document is a candidate input.
-2. **OBJ-BILLING** allocation in the taxonomy registry.
+2. **OBJ-007** allocation in the Objective Registry.
 3. **HOST-5.0 Billing Foundation** authored.
 4. **CONTEXT-BILLING-1 Commercial Domain Model** authored.
 5. **Maximised AI Price Book** delivered.

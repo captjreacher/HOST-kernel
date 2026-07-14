@@ -4,7 +4,7 @@
 
 | Field | Value |
 | --- | --- |
-| Originating Objective | OBJ-REA (proposed) |
+| Originating Objective | OBJ-002 |
 | Status | Proposed |
 | Version | 1.0 (draft) |
 | Owner | HOST |

@@ -5,10 +5,10 @@
 | Field | Value |
 | --- | --- |
 | Document Type | Domain Architecture (pre-implementation) |
-| Proposed Objective | OBJ-COMMREG (unallocated) |
+| Proposed Objective | OBJ-008 |
 | Proposed ADR | ADR-COMMREG-01 - Commercial Registry object model and publishing contract |
 | Parent Objective | HOST-5.x Billing Foundation (proposed) |
-| Peer Objectives | OBJ-COMMRUN Commercial Runtime, OBJ-COMMADP Commercial Adapters |
+| Peer Objectives | OBJ-009 Commercial Runtime, Commercial Adapters (future, unallocated) |
 | Status | Draft for Review |
 | Version | 0.1 |
 | Owner | HOST (governance) / BILLING (implementation) |
@@ -543,7 +543,7 @@ Registry activity does not require a full ADR for routine publications. However:
 - **Policy changes** (approval matrix, retention policy, effective-dating rules) require an ADR.
 - **Routine publications** (new Offers, new Prices, new Promotions) use the internal approval matrix without a full ADR.
 
-The Registry maintains its own change log under OBJ-COMMREG.
+The Registry maintains its own change log under OBJ-008.
 
 ---
 
