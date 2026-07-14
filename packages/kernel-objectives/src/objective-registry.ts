@@ -20,6 +20,30 @@ const objectiveLifecycleTransitions = new Map<ObjectiveLifecycleState, readonly 
   objectiveLifecycleOrder.map((state, index, states) => [state, states.slice(index + 1, index + 2)] as const),
 );
 
+const constitutionalObjectiveSeeds: readonly Objective[] = [
+  ['OBJ-000', 'Ecosystem Constitution', 'Canonical constitutional entry point for HOST governance.'],
+  ['OBJ-001', 'Ecosystem Taxonomy Registry', 'Canonical taxonomy and numbering registry.'],
+  ['OBJ-002', 'HOST Kernel Operating Model', 'Canonical operating model for the HOST kernel.'],
+  ['OBJ-003', 'Registry Service Specification', 'Canonical technical specification for the Registry Service.'],
+  ['OBJ-004', 'Context Domain Model', 'Canonical CONTEXT domain model specification.'],
+  ['OBJ-005', 'Ecosystem State Machine', 'Canonical lifecycle state machine for ecosystem objects.'],
+  ['OBJ-006', 'HOST Changelog', 'Canonical changelog baseline for HOST-kernel implementation work.'],
+].map(([id, displayName, description]) => ({
+  id: id!,
+  key: id!,
+  display_name: displayName!,
+  description: description!,
+  status: 'active',
+  version: '1.0',
+  owner: 'HOST',
+  created_at: '2026-06-28T00:00:00.000Z',
+  updated_at: '2026-06-28T00:00:00.000Z',
+  objective_id: id!,
+  lifecycle_state: 'approved',
+  dependencies: [],
+  references: [],
+}));
+
 const clone = <T>(value: T): T => structuredClone(value);
 
 const nowIso = (): string => new Date().toISOString();
@@ -96,6 +120,7 @@ const transitionIssue = (from: ObjectiveLifecycleState, to: ObjectiveLifecycleSt
 export interface ObjectiveRegistryServiceOptions extends ObjectiveRegistryOptions {
   registry?: RegistryService;
   identifierService?: IdentifierService;
+  seedConstitutionalObjectives?: boolean;
 }
 
 export class ObjectiveRegistryService implements ObjectiveRegistry {
@@ -105,6 +130,18 @@ export class ObjectiveRegistryService implements ObjectiveRegistry {
   constructor(options: ObjectiveRegistryServiceOptions = {}) {
     this.#registry = options.registry ?? new RegistryService();
     this.#identifierService = options.identifierService ?? new CanonicalIdentifierService({ registry: this.#registry });
+    if (options.seedConstitutionalObjectives !== false) {
+      this.#seedConstitutionalObjectives();
+    }
+  }
+
+  #seedConstitutionalObjectives(): void {
+    for (const objective of constitutionalObjectiveSeeds) {
+      if (this.#registry.lookup('objective', objective.id)) {
+        continue;
+      }
+      this.#commitObjective(objective);
+    }
   }
 
   #ensureObjective(record: RegistryEntry): Objective {

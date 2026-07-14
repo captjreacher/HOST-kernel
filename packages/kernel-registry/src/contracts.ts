@@ -56,7 +56,13 @@ export type RegistryEntryKind =
   | 'event'
   | 'artifact'
   | 'workflow'
-  | 'task';
+  | 'task'
+  | 'roadmap'
+  | 'epic'
+  | 'initiative'
+  | 'sprint'
+  | 'milestone'
+  | 'release';
 
 export interface RegistryEntry extends RegistryRecord {
   kind: RegistryEntryKind;

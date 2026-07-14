@@ -54,7 +54,7 @@ test('service availability', () => {
     owner: 'HOST',
   });
 
-  assert.match(objective.objective_id, /^OBJ-\d{3}$/);
+  assert.equal(objective.objective_id, 'OBJ-007');
   assert.equal(kernel.objectives.retrieveObjective(objective.id)?.id, objective.id);
   assert.ok(kernel.registry.lookup('objective', objective.id));
 });
@@ -68,6 +68,11 @@ test('seed discovery', () => {
     artifacts.map((artifact) => artifact.id).sort(),
     ['HOST-0', 'OBJ-000', 'OBJ-001', 'OBJ-002', 'OBJ-003', 'OBJ-004', 'OBJ-005', 'OBJ-006'].sort(),
   );
+  assert.equal(kernel.objectives.listObjectives().length, 7);
+  assert.ok(kernel.objectives.listObjectives().every((objective) => objective.lifecycle_state === 'approved'));
+  assert.ok(kernel.registry.lookup('objective', 'OBJ-000'));
+  assert.equal(kernel.registry.lookup('document', 'OBJ-000'), undefined);
+  assert.equal(kernel.documents.retrieveDocument('OBJ-000')?.document_type, 'constitution');
 });
 
 test('health success', () => {
