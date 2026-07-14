@@ -16,6 +16,18 @@
 
 Objective allocation ensures every request has a unique, traceable governing Objective before work begins.
 
+## Canonical Authority
+
+The HOST Objective Registry is the single authoritative source for every `OBJ-###` identifier.
+
+- Canonical objective documents describe approved governance state but do not allocate identifiers independently.
+- The Identifier Service performs mechanical reservation against the shared Registry Service.
+- HOST governance authorises allocation and lifecycle transitions.
+- A newly allocated objective enters the Registry as `Draft`; allocation is not approval.
+- Registry reservations are permanent. Closed or archived identifiers are never released or reassigned.
+
+The constitutional objectives `OBJ-000` through `OBJ-006` are seeded as approved Objective Registry records with their existing identifiers, ownership, and titles. Their documentation remains the normative content linked to those records.
+
 ## Rules
 
 - Determine whether an Objective already exists before creating a new one.
@@ -45,11 +57,17 @@ Codex sessions should use the same identifier.
 
 ## Allocation Workflow
 
-1. Check the existing Objective register.
-2. Confirm whether the request fits an existing Objective.
-3. If not, allocate the next available Objective number.
-4. Record the Objective title and scope.
-5. Link the request, decision, and later implementation artefacts back to that Objective.
+1. Receive the request and describe its candidate scope.
+2. Query the canonical Objective Registry for an existing or overlapping objective.
+3. Confirm ownership, scope, dependencies, and required traceability.
+4. HOST governance authorises a new allocation only when the request is distinct.
+5. The Identifier Service atomically reserves the next available `OBJ-###` against the shared Registry Service.
+6. Create the canonical Objective Registry record in `Draft` state.
+7. Route the objective through `Proposed` and `Approved` governance transitions.
+8. Link decisions and ADRs to the allocated objective.
+9. Hand approved objectives to Roadmap for delivery sequencing when implementation is required.
+
+Governance approval and mechanical allocation are separate actions. Tools may perform reservation, but they may not authorise the scope or approve the resulting objective.
 
 ## Allocation Criteria
 
@@ -59,3 +77,22 @@ An Objective may be allocated only when:
 - the request has an agreed scope boundary
 - the request can be traced through validation and context refresh
 - the request does not duplicate an existing Objective
+
+## Allocation Concurrency
+
+Allocation must use one shared, durable Registry Service transaction boundary. The identifier is reserved before the Objective record is committed. A concurrent allocator that loses the reservation race must retry from the canonical registry state; it must never reuse or overwrite the winning identifier.
+
+## Lifecycle
+
+The canonical lifecycle is:
+
+`Draft -> Proposed -> Approved -> Planned -> Active -> Implemented -> Validated -> Closed -> Archived`
+
+Objectives are closed and archived, not retired or superseded. Replacement work receives a new Objective and records a traceability relationship to the prior archived Objective.
+
+## Downstream Validation
+
+- ADR records must reference an allocated, non-archived Objective Registry record.
+- Planning records must reference an Objective that has reached `Approved` or a later non-archived state.
+- Malformed, duplicate, missing, or orphaned objective references are rejected.
+- ADR filenames may use an approved topic slug, but their originating objective metadata must use `OBJ-###`.

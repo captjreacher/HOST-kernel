@@ -192,6 +192,7 @@ const constitutionalDocumentSeeds: readonly ConstitutionalDocumentSeed[] = [
     relationships: [],
   },
 ];
+const constitutionalDocumentSeedById = new Map(constitutionalDocumentSeeds.map((seed) => [seed.id, seed] as const));
 
 export class DocumentRegistryService implements DocumentRegistry {
   readonly #registry: RegistryService;
@@ -206,7 +207,7 @@ export class DocumentRegistryService implements DocumentRegistry {
 
   #seedConstitutionalArtifacts(): void {
     for (const seed of constitutionalDocumentSeeds) {
-      if (this.#registry.lookup('document', seed.id)) {
+      if (this.#registry.lookup(seed.id)) {
         continue;
       }
       this.registerDocument(seed);
@@ -214,7 +215,17 @@ export class DocumentRegistryService implements DocumentRegistry {
   }
 
   #ensureDocument(record: RegistryEntry): Document {
-    return toDocument(record);
+    const document = toDocument(record);
+    const constitutionalSeed = constitutionalDocumentSeedById.get(record.id);
+    return constitutionalSeed
+      ? {
+          ...document,
+          document_type: constitutionalSeed.document_type,
+          owner_objective: constitutionalSeed.owner_objective ?? null,
+          lineage: [...constitutionalSeed.lineage],
+          relationships: [...constitutionalSeed.relationships],
+        }
+      : document;
   }
 
   #commit(document: DocumentCreateInput | Document, current?: Document): Document {
@@ -231,7 +242,7 @@ export class DocumentRegistryService implements DocumentRegistry {
   }
 
   retrieveDocument(id: string): Document | undefined {
-    const record = this.#registry.lookup('document', id);
+    const record = this.#registry.lookup('document', id) ?? (this.#seedIds.has(id) ? this.#registry.lookup('objective', id) : undefined);
     return record ? this.#ensureDocument(record as RegistryEntry) : undefined;
   }
 
@@ -272,7 +283,11 @@ export class DocumentRegistryService implements DocumentRegistry {
   }
 
   list(): Document[] {
-    return this.#registry.find({ kind: 'document' }).map((record) => this.#ensureDocument(record as RegistryEntry));
+    const documents = this.#registry.find({ kind: 'document' });
+    const constitutionalObjectives = this.#registry
+      .find({ kind: 'objective' })
+      .filter((record) => this.#seedIds.has(record.id));
+    return [...documents, ...constitutionalObjectives].map((record) => this.#ensureDocument(record as RegistryEntry));
   }
 
   listDocuments(): Document[] {

@@ -41,6 +41,7 @@ const createSupportRegistry = (): RegistryService => {
       display_name: 'ADR 001',
       description: 'Architecture decision record.',
       lifecycle_state: 'draft',
+      owning_objective: 'OBJ-900',
     }),
   });
 
@@ -138,9 +139,24 @@ test('create objective', () => {
     owner: 'host',
   });
 
-  assert.match(objective.objective_id, /^OBJ-\d{3}$/);
+  assert.equal(objective.objective_id, 'OBJ-007');
   assert.equal(objective.lifecycle_state, 'draft');
   assert.equal(service.lookup(objective.id)?.objective_id, objective.objective_id);
+});
+
+test('constitutional objectives are canonical objective records', () => {
+  const service = new ObjectiveRegistryService();
+
+  assert.deepEqual(service.listObjectives().map((objective) => objective.id), [
+    'OBJ-000',
+    'OBJ-001',
+    'OBJ-002',
+    'OBJ-003',
+    'OBJ-004',
+    'OBJ-005',
+    'OBJ-006',
+  ]);
+  assert.ok(service.listObjectives().every((objective) => objective.lifecycle_state === 'approved'));
 });
 
 test('create duplicate objective rejection', () => {
@@ -278,4 +294,64 @@ test('objective with broken traceability links', () => {
       }),
     RegistryError,
   );
+});
+
+test('ADR records require an allocated non-archived objective', () => {
+  const registry = new RegistryService();
+  new ObjectiveRegistryService({ registry });
+
+  assert.throws(
+    () => registry.register({
+      ...createRegistryRecord({
+        kind: 'adr',
+        id: 'ADR-900',
+        key: 'ADR-900',
+        owning_objective: 'OBJ-999',
+      }),
+    }),
+    RegistryError,
+  );
+
+  const adr = registry.register({
+    ...createRegistryRecord({
+      kind: 'adr',
+      id: 'ADR-901',
+      key: 'ADR-901',
+      owning_objective: 'OBJ-002',
+    }),
+  });
+  assert.equal(adr.owning_objective, 'OBJ-002');
+});
+
+test('planning records derive only from approved objectives', () => {
+  const registry = new RegistryService();
+  const objectives = new ObjectiveRegistryService({ registry });
+  const draft = objectives.createObjective({
+    key: 'future-planning',
+    display_name: 'Future Planning',
+    description: 'Draft objective not yet approved for Roadmap sequencing.',
+    owner: 'HOST',
+  });
+
+  assert.throws(
+    () => registry.register({
+      ...createRegistryRecord({
+        kind: 'roadmap',
+        id: 'RDM-900',
+        key: 'RDM-900',
+        owning_objective: draft.id,
+      }),
+    }),
+    RegistryError,
+  );
+
+  const roadmap = registry.register({
+    ...createRegistryRecord({
+      kind: 'roadmap',
+      id: 'RDM-901',
+      key: 'RDM-901',
+      owning_objective: 'OBJ-002',
+    }),
+  });
+  assert.equal(roadmap.owning_objective, 'OBJ-002');
 });

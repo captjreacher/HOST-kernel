@@ -50,4 +50,5 @@ export interface ObjectiveRegistry {
 export interface ObjectiveRegistryOptions {
   registry?: RegistryService;
   identifierService?: IdentifierService;
+  seedConstitutionalObjectives?: boolean;
 }

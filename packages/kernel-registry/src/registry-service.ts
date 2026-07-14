@@ -84,6 +84,8 @@ const mergeIssues = (...issueSets: ValidationIssue[][]): ValidationIssue[] => {
 };
 
 const isCanonicalIdentifier = (value: string): boolean => canonicalIdentifierPattern.test(value);
+const planningKinds = new Set<RegistryEntryKind>(['roadmap', 'epic', 'initiative', 'sprint', 'milestone', 'release']);
+const acceptedObjectiveStates = new Set(['approved', 'planned', 'active', 'implemented', 'validated', 'closed']);
 
 const queryKinds = (kind?: RegistryFindQuery['kind']): RegistryEntryKind[] | undefined => {
   if (!kind) {
@@ -209,6 +211,56 @@ export class RegistryService implements IdentifierRegistry, ValidationLookup {
         lookup: this,
         source: 'registry-service',
       }).issues);
+    }
+
+    if (record.kind === 'adr' || planningKinds.has(record.kind)) {
+      if (!record.owning_objective) {
+        issues.push([{
+          code: validationIssueCodes.validationRegistryRecordFieldMissing,
+          path: 'owning_objective',
+          message: `${record.kind} records require an allocated governing objective.`,
+          severity: 'error',
+          subjectKind: record.kind as ValidationContext['subjectKind'],
+          subjectId: record.id,
+          expected: 'allocated OBJ-###',
+        }]);
+      } else {
+        const objective = this.lookup('objective', record.owning_objective) as RegistryEntry | undefined;
+        if (!objective) {
+          issues.push([{
+            code: validationIssueCodes.validationTraceabilityLinkBroken,
+            path: 'owning_objective',
+            message: `Governing objective is not allocated: ${record.owning_objective}`,
+            severity: 'error',
+            subjectKind: record.kind as ValidationContext['subjectKind'],
+            subjectId: record.id,
+            expected: 'allocated objective record',
+            actual: record.owning_objective,
+          }]);
+        } else if (objective.lifecycle_state === 'archived') {
+          issues.push([{
+            code: validationIssueCodes.validationTraceabilityLinkBroken,
+            path: 'owning_objective',
+            message: `Governing objective is archived: ${record.owning_objective}`,
+            severity: 'error',
+            subjectKind: record.kind as ValidationContext['subjectKind'],
+            subjectId: record.id,
+            expected: 'non-archived objective',
+            actual: 'archived',
+          }]);
+        } else if (planningKinds.has(record.kind) && !acceptedObjectiveStates.has(objective.lifecycle_state ?? '')) {
+          issues.push([{
+            code: validationIssueCodes.validationTraceabilityLinkBroken,
+            path: 'owning_objective',
+            message: `Planning records require an approved governing objective: ${record.owning_objective}`,
+            severity: 'error',
+            subjectKind: record.kind as ValidationContext['subjectKind'],
+            subjectId: record.id,
+            expected: 'approved objective',
+            actual: objective.lifecycle_state ?? 'unknown',
+          }]);
+        }
+      }
     }
 
     return mergeIssues(...issues);
