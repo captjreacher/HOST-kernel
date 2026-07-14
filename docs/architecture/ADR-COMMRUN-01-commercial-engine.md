@@ -33,7 +33,7 @@ Adopt the **Commercial Engine** as the canonical execution engine for commercial
 
 The Engine owns intent processing, eligibility validation, quote generation, order creation, checkout coordination, payment orchestration via adapters, subscription lifecycle, invoice generation and dispatch, entitlement granting and revocation, refund and credit management, dunning, fulfilment coordination (tracking, not delivery), commercial event publication, and immutable transaction history.
 
-The Engine does not own commercial definitions (Registry), pricing decisions (Registry), provider-specific communication (Adapters), the accounting ledger (Xero via Adapter), customer identity (future Identity capability), product access enforcement (products query Entitlement service), or consent capture (future Consent capability).
+The Engine does not own commercial definitions (Registry), pricing decisions (Registry), provider-specific communication (Adapters), external accounting ledger operations (Accounting Adapter), customer identity (future Identity capability), product access enforcement (products query Entitlement service), or consent capture (future Consent capability).
 
 ### Runtime lifecycle
 
@@ -92,7 +92,7 @@ The Engine orchestrates operations through canonical Adapter contracts. Adapter 
 - **Tax adapters** (optional) — `compute-tax`, `report-return`.
 - **Outbound payment adapters** (future) — `authorize-payout`, `settle-payout`, `reconcile-payout`.
 
-Provider-specific communication (Stripe, Xero, GST service) lives inside each Adapter. Provider-specific concepts do not leak past the Adapter boundary. The Engine contains no provider-specific code. Adding a new provider is: implement the contract, register via HOST-4E Integration Foundation, update configuration. No Engine code change.
+Provider-specific communication lives inside each Adapter. Provider-specific concepts do not leak past the Adapter boundary. The Engine contains no provider-specific code or provider-specific terminology. Adding a new provider is: implement the contract, register via HOST-4E Integration Foundation, update configuration. No Engine code change.
 
 Adapters do not coordinate with each other; cross-adapter workflows are the Engine's responsibility.
 

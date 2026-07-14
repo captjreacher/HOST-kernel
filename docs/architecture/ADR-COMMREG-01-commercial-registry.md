@@ -46,7 +46,7 @@ Draft → InReview → Approved → Published
                               → Rescinded (cancelled between Approved and Published)
 ```
 
-Publication emits canonical events on the HOST-4.6 event bus under the `commercial.*` namespace. Downstream systems (Commercial Engine, Stripe Adapter, Xero Adapter, applications) subscribe to reconcile.
+Publication emits canonical events on the HOST-4.6 event bus under the `commercial.*` namespace. Downstream systems (Commercial Engine, provider Adapters, applications) subscribe to reconcile.
 
 ### Versioning model
 
@@ -81,7 +81,7 @@ Applications may not:
 - Store prices locally except as short-lived version-pinned caches (TTL ≤ 15 minutes for pricing-sensitive views).
 - Compute prices, discounts, taxes, or entitlements independently.
 - Reference Offer versions directly except for display of historical purchases.
-- Bypass the Registry to reach adapters (Stripe, Xero) directly.
+- Bypass the Registry or reach adapters directly.
 - Author Registry entries.
 
 At checkout time, applications re-resolve canonical IDs against the Registry rather than trusting caches.
