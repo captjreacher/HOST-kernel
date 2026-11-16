@@ -34,6 +34,7 @@ This index is the onboarding map for the HOST governance framework.
 | [OBJ-003](services/registry-service-specification.md) | Registry service behaviour specification |
 | [OBJ-004](context/context-domain-model.md) | Canonical CONTEXT conceptual model |
 | [OBJ-005](lifecycle/ecosystem-state-machine.md) | Canonical lifecycle state machine |
+| [OBJ-010](objectives/OBJ-010-shared-infrastructure-activation.md) | Shared infrastructure governance activation objective |
 
 ## Supporting Canonical Documents
 
@@ -43,6 +44,7 @@ This index is the onboarding map for the HOST governance framework.
 | [numbering standards](taxonomy/numbering-standards.md) | Identifier model |
 | [object definitions](taxonomy/object-definitions.md) | Canonical object meanings |
 | [repository ownership](taxonomy/repository-ownership.md) | Responsibility boundaries |
+| [capability registry](taxonomy/capability-registry.md) | Shared capability names and owners |
 | [traceability model](taxonomy/traceability-model.md) | Lineage through the ecosystem |
 | [naming conventions](taxonomy/naming-conventions.md) | Canonical naming rules |
 | [kernel request lifecycle](kernel/request-lifecycle.md) | Request progression through governance |
@@ -68,6 +70,12 @@ This index is the onboarding map for the HOST governance framework.
 | [ADR-006](architecture/ADR-006-application-layer-architecture-baseline.md) | Application Layer baseline and dependency rules for HOST-3 |
 | [ADR-007](architecture/ADR-007-transport-adapter-architecture-baseline.md) | Transport Adapter Layer baseline and dependency rules above the frozen API Host protocol |
 | [ADR-008](architecture/ADR-008-integration-layer-architecture-baseline.md) | Integration Layer baseline and dependency rules above runtime composition |
+| [ADR-010](architecture/ADR-010-shared-infrastructure-ownership.md) | Shared infrastructure governance and MGRNZ execution ownership |
+| [shared infrastructure contracts](contracts/shared-infrastructure-contracts.md) | Provider-neutral inventory, migration, backup, recovery and evidence contracts |
+| [MGRNZ implementation handover](handover/mgrnz-shared-infrastructure.md) | Bounded operational handover |
+| [Roadmap handover](roadmap/shared-infrastructure-activation.md) | Proposed sequencing for Roadmap acceptance |
+| [security incident record](security/INC-2026-11-16-embedded-service-role-credential.md) | Apparent embedded service-role credential |
+| [technical debt record](technical-debt/TD-2026-11-16-host-baseline-runtime-gaps.md) | Pre-existing runtime/package baseline gaps |
 
 ## Recommended Reading Order
 
