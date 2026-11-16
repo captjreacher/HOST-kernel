@@ -56,6 +56,7 @@ It also covers the canonical repository roles:
 | [traceability-model](traceability-model.md) | Defines lineage across work stages |
 | [naming-conventions](naming-conventions.md) | Defines naming rules for generated artefacts |
 | [glossary](glossary.md) | Defines canonical terminology |
+| [capability-registry](capability-registry.md) | Registers shared infrastructure capabilities and owners |
 
 ## Canonical Lookup Table
 
@@ -115,6 +116,10 @@ HOST owns:
 - taxonomy
 - lifecycle
 - standards
+
+Shared infrastructure capability governance is defined by [ADR-010](../architecture/ADR-010-shared-infrastructure-ownership.md).
+The operational implementation owner is MGRNZ; this does not change HOST's
+ownership of the taxonomy or permit infrastructure execution in HOST-kernel.
 
 ## Adoption Rule
 

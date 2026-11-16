@@ -28,6 +28,19 @@ This document defines who owns which responsibility boundary in the HOST ecosyst
 | FunkMyFans | product implementation and testing for its domain | ecosystem governance, canonical knowledge definitions for the whole platform |
 | Future Products | product implementation and testing for future domains | ecosystem governance, canonical knowledge definitions for the whole platform |
 
+## Shared Infrastructure Activation
+
+| Responsibility | Canonical governance owner | Implementation and operational owner |
+| --- | --- | --- |
+| Provider-neutral infrastructure contracts, standards and validation gates | HOST | Not applicable; HOST must not execute infrastructure |
+| Shared database inventory, backup, recovery and infrastructure execution | HOST governs | MGRNZ |
+| Product migrations and product release validation | HOST governs | Owning product repository |
+| Credential lifecycle policy | HOST governs | Accountable credential owner with controlled MGRNZ delegation |
+| Cockpit operational controls | HOST governs | MGRNZ; no direct privileged credentials or arbitrary execution |
+| Ecosystem security remediation for PUBLIC-executable SECURITY DEFINER routines | HOST governs the programme | MGRNZ coordinates; owning product teams remediate their routines |
+
+No new infrastructure repository is authorised by ADR-010.
+
 ## Boundary Rules
 
 - HOST sets the rules.
