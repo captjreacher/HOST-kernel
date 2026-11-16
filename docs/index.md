@@ -34,6 +34,7 @@ This index is the onboarding map for the HOST governance framework.
 | [OBJ-003](services/registry-service-specification.md) | Registry service behaviour specification |
 | [OBJ-004](context/context-domain-model.md) | Canonical CONTEXT conceptual model |
 | [OBJ-005](lifecycle/ecosystem-state-machine.md) | Canonical lifecycle state machine |
+| [OBJ-010](objectives/OBJ-010-shared-infrastructure-activation.md) | Shared infrastructure governance activation objective |
 
 ## Supporting Canonical Documents
 

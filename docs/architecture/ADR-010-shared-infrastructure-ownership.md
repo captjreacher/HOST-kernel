@@ -9,7 +9,7 @@
 | Version | 1.0 |
 | Owner | HOST |
 | Accepted | 2026-11-16 |
-| Related documents | [OBJ-000](../constitution/ecosystem-constitution.md), [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [Capability Registry](../taxonomy/capability-registry.md), [Shared Infrastructure Contracts](../contracts/shared-infrastructure-contracts.md) |
+| Related documents | [OBJ-010](../objectives/OBJ-010-shared-infrastructure-activation.md), [OBJ-000](../constitution/ecosystem-constitution.md), [OBJ-001](../taxonomy/taxonomy-registry.md), [OBJ-002](../kernel/operating-model.md), [Capability Registry](../taxonomy/capability-registry.md), [Shared Infrastructure Contracts](../contracts/shared-infrastructure-contracts.md) |
 
 ## Context
 
